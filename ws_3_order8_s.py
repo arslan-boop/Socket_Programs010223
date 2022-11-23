@@ -5,8 +5,8 @@ from datetime import datetime
 
 global orderbook, updates, emir_defteri,v_last_update
 v_last_update='2022'
-orderbook = {}
-emir_defteri = {}
+orderbook = []
+emir_defteri = []
 updates = 0
 
 global v_sembol, v_limit
@@ -22,8 +22,8 @@ def basla(v_lim, v_sem):
     v_soc = "wss://stream.binance.com:9443/ws/" + v_sembol + "@depth"
     ws = websocket.WebSocketApp(v_soc, on_open=on_open, on_close=on_close, on_message=on_message)
     ws.run_forever()
-    orderbook = {}
-    emir_defteri = {}
+    orderbook = []
+    emir_defteri = []
     updates = 0
 
 def on_open(ws):
@@ -50,8 +50,8 @@ def on_message(ws, message):
     lastUpdateId = orderbook['lastUpdateId']
     #print('Order Book =', orderbook)
     emir_defteri = orderbook
-    # print('Anlık Data',len(data["b"]))
-    # print('İçerde Emir Defterindeki Bids ve Ask =', len(orderbook["bids"]), '-', len(orderbook["asks"]))
+    print('Anlık Data',len(data["b"]))
+    print('İçerde Emir Defterindeki Bids ve Ask =', len(emir_defteri["bids"]), '-', len(emir_defteri["asks"]))
 
     # drop any updates older than the snapshot
     if updates == 0:
@@ -81,8 +81,6 @@ def process_updates(data):
         manage_orderbook('asks', update)
         # last_update['last_update'] = datetime.now()
     v_last_update = datetime.now()
-    v_book = get_ordergenelorder_book()
-    #print('Son güncelleme', v_last_update,v_book )
 
 # Update orderbook, differentiate between remove, update and new
 def manage_orderbook(side, update):

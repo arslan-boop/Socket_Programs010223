@@ -34,7 +34,7 @@ v_alim_var = 0
 v_alim_fiyati = 0
 
 global genel_orderbook
-genel_orderbook = []
+genel_orderbook = {}
 
 
 # **************************************************************************************
@@ -58,7 +58,7 @@ def whale_order_full(v_symbol, v_limit, v_spot_client, v_son_fiyat, v_genel_orde
     bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'])
 
     # print(ask_tbl.head(5))
-    print('Len Bid  İlkler=', len(bid_tbl), 'Len Ask = ', len(ask_tbl))
+    #print('Len Bid  İlkler=', len(bid_tbl), 'Len Ask = ', len(ask_tbl))
     # Fiyatları nümeric yap
     ask_tbl['price'] = pd.to_numeric(ask_tbl['price'])
     ask_tbl['quantity'] = pd.to_numeric(ask_tbl['quantity'])
@@ -137,7 +137,7 @@ def whale_order_full(v_symbol, v_limit, v_spot_client, v_son_fiyat, v_genel_orde
     v_vol_oran_ask = (float(ask_tbl['volume'].sum()) / float(volumewhale)) * 100
     v_hedef_ask = "{:.8f}".format(float(v_son_fiyat * v_zarar_oran))
 
-    print('************************************ORANLAR************************************')
+    print('****************',v_sembol_g,'********************ORANLAR************************************')
     print('Volumemler-Full= ', "{:.1f}".format(volumewhale), 'Bid = ', str("{:.1f}".format(bid_tbl['volume'].sum())),'Ask = ', str("{:.1f}".format(ask_tbl['volume'].sum())))
     print('Bid Len ve Son Fiyat', v_bid_len, v_ask_len)
     print('Teklif/Total Vol: ', v_vol_oran_bid, '-','Talep/Total Vol:' ,v_vol_oran_ask, 'Parametrik > oran:', v_volume_fark_oran)
@@ -296,15 +296,45 @@ def dosya_aktar():
             i += 1
     dosya.close()
     print('Dosya Tamam')
-
-
-if __name__ == '__main__':
-    v_genel_orderbook = []
+    #**********************************************
+def main(v_semb):
+    global  v_sembol_g
     try:
         spot_client = Client(base_url="https://api3.binance.com")
         print('Başladı ', datetime.now())
         v_inter_g = '1s'
-        v_limit_g = 1000
+        v_limit_g = 500
+        v_in_g = '1000ms'
+        v_sembol_g = v_semb
+
+        # # Son fiyatı almak için Coini sürekli dinleyen socket stream --, daemon=True
+        t1 = threading.Thread(target=run_frontdata, args=(v_sembol_g, v_inter_g))
+        t1.start()
+        time.sleep(1)
+
+        # Emir defterinin snapshotını alıp sürekli güncelliyor.
+        t3 = threading.Thread(target=ws_3_order8_s.basla, args=(v_limit_g, v_sembol_g))
+        t3.start()
+        time.sleep(3)
+
+        while True:
+            v_genel_orderbook = ws_3_order8_s.get_ordergenelorder_book()
+            time.sleep(0.66)
+            #print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
+            if v_last_price_g != 0:
+                whale_order_full(v_sembol_g, v_limit_g, spot_client, v_last_price_g, v_genel_orderbook)
+
+            print('----------------------------------------',datetime.now())
+    except Exception as exp:
+        v_hata_mesaj = 'Hata Oluştu!!..T1  = ' + str(exp)
+
+
+if __name__ == '__main__':
+    try:
+        spot_client = Client(base_url="https://api3.binance.com")
+        print('Başladı ', datetime.now())
+        v_inter_g = '1s'
+        v_limit_g = 500
         v_in_g = '1000ms'
         #dosya_aktar()
         # print('Dosyaya ', v_dosya_coin[3])
@@ -331,5 +361,4 @@ if __name__ == '__main__':
 
             print('----------------------------------------',datetime.now())
     except Exception as exp:
-        v_hata_mesaj = 'Ana Program Hata Oluştu!!..T1  = ' + str(exp)+datetime.now()
-        Telebot_v1.mainma(v_hata_mesaj)
+        v_hata_mesaj = 'Hata Oluştu!!..T1  = ' + str(exp)

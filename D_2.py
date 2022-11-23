@@ -1,5 +1,4 @@
 import asyncio
-
 from binance import AsyncClient, BinanceSocketManager
 
 

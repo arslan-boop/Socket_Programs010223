@@ -1,10 +1,9 @@
 import warnings
-
-import ws_3_order8_s
-
+import requests
+from json import loads
+from datetime import datetime
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import threading
-import traceback
 from binance.spot import Spot as Client
 import json
 import pandas as pd
@@ -38,7 +37,7 @@ genel_orderbook = []
 
 
 # **************************************************************************************
-def whale_order_full(v_symbol, v_limit, v_spot_client, v_son_fiyat, v_genel_orderbook):
+def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
     global  v_alim_var, v_hedef_bid_global,v_hedef_ask_global,v_alim_fiyati
     # global ask_tbl, bid_tbl
     v_volume_fark_oran = 5  # İlgili bid veya ask satırının tüm tablodaki volume oranı
@@ -58,7 +57,7 @@ def whale_order_full(v_symbol, v_limit, v_spot_client, v_son_fiyat, v_genel_orde
     bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'])
 
     # print(ask_tbl.head(5))
-    print('Len Bid  İlkler=', len(bid_tbl), 'Len Ask = ', len(ask_tbl))
+    print('******HAM HALİ****=', len(bid_tbl), 'Len Ask = ', len(ask_tbl))
     # Fiyatları nümeric yap
     ask_tbl['price'] = pd.to_numeric(ask_tbl['price'])
     ask_tbl['quantity'] = pd.to_numeric(ask_tbl['quantity'])
@@ -184,7 +183,7 @@ def whale_order_full(v_symbol, v_limit, v_spot_client, v_son_fiyat, v_genel_orde
                 Telebot_v1.mainma(v_mess)
                 v_alim_fiyati= v_son_fiyat
                 v_hedef_bid_global = v_hedef_bid
-                v_hedef_ask_global = v_son_fiyat * 0.98
+                v_hedef_ask_global = v_son_fiyat * 0.99
                 v_alim_var = 1
                 print('****************Teklifler = ********************')
                 print(bid_tbl)
@@ -261,27 +260,8 @@ def run_frontdata(v_sem, v_int):
             time.sleep(0.33)
         # except:
         except Exception as exp:
-            v_hata_mesaj = 'Hata Oluştu!!..T1  = ' + str(exp)
-            time.sleep(2)
-
-
-# spot api kullanarak verdiğimiz miktardaki emirleri döner (1000 tane vs)
-def hesapla_full(v_sembol_g, v_limit_g, spot_client, v_last_price_g):
-    global orderbook1
-    orderbook1 = {}
-    while (True):
-        try:
-            ws_3_order8_s.basla(v_limit_g, v_sembol_g)
-            print('Başladı döngü')
-            v_genel_orderbook = ws_3_order8_s.get_ordergenelorder_book()
-            # v_genel_orderbook = ws_3_order8_s.get_snapshot()
-            # orderbook1 = ws_3_order8_s.get_direkt_order(v_sembol_g,v_limit_g)
-            print('v_c book', orderbook1)
-            # print('lart =', v_last_price_g)
-            if v_last_price_g != 0:
-                whale_order_full(v_sembol_g, v_limit_g, spot_client, v_last_price_g, orderbook1)
-            time.sleep(0.666)
-        except:
+            v_hata_mesaj = 'Hata Oluştu!!..run_frontdata  = ' + str(exp)
+            Telebot_v1.mainma(v_hata_mesaj)
             time.sleep(2)
 
 
@@ -297,39 +277,34 @@ def dosya_aktar():
     dosya.close()
     print('Dosya Tamam')
 
+def get_snapshot(v_sembol,v_limit):
+    print('Snapshot alındı', 'Sembol=', v_sembol, 'Limit=', v_limit, 'Zaman=', datetime.now())
+    r = requests.get('https://www.binance.com/api/v1/depth?symbol=' + v_sembol.upper() + '&limit=' + str(v_limit))
+    return loads(r.content.decode())
 
 if __name__ == '__main__':
     v_genel_orderbook = []
     try:
-        spot_client = Client(base_url="https://api3.binance.com")
         print('Başladı ', datetime.now())
         v_inter_g = '1s'
         v_limit_g = 1000
         v_in_g = '1000ms'
-        #dosya_aktar()
-        # print('Dosyaya ', v_dosya_coin[3])
-        v_sembol_g = 'FIDAUSDT'
-        # for k in range(len(v_dosya_coin)):
-        #    v_sembol_g = v_dosya_coin[k]
+        v_sembol_g = 'VIDTUSDT'
 
         # # Son fiyatı almak için Coini sürekli dinleyen socket stream --, daemon=True
         t1 = threading.Thread(target=run_frontdata, args=(v_sembol_g, v_inter_g))
         t1.start()
+        t1.join(0.2)
         time.sleep(1)
 
-        # Emir defterinin snapshotını alıp sürekli güncelliyor.
-        t3 = threading.Thread(target=ws_3_order8_s.basla, args=(v_limit_g, v_sembol_g))
-        t3.start()
-        time.sleep(3)
-
         while True:
-            v_genel_orderbook = ws_3_order8_s.get_ordergenelorder_book()
+            v_genel_orderbook = get_snapshot(v_sembol_g,v_limit_g)
             time.sleep(0.66)
             #print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
             if v_last_price_g != 0:
-                whale_order_full(v_sembol_g, v_limit_g, spot_client, v_last_price_g, v_genel_orderbook)
+                whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook)
 
             print('----------------------------------------',datetime.now())
     except Exception as exp:
-        v_hata_mesaj = 'Ana Program Hata Oluştu!!..T1  = ' + str(exp)+datetime.now()
+        v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp)+datetime.now()
         Telebot_v1.mainma(v_hata_mesaj)
