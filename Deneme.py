@@ -1,21 +1,24 @@
-import logging
-import threading
-import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 
-def thread_function(name):
-    logging.info("Thread %s: starting", name)
-    time.sleep(2)
-    logging.info("Thread %s: finishing", name)
+def my_multithreading_method(my_list, lock):
+    with lock:
+        my_list.append("Hello")
+        return True
 
-if __name__ == "__main__":
-    format = "%(asctime)s: %(message)s"
-    logging.basicConfig(format=format, level=logging.INFO,
-                        datefmt="%H:%M:%S")
+lock = Lock()
 
-    logging.info("Main    : before creating thread")
-    x = threading.Thread(target=thread_function, args=(1,))
-    logging.info("Main    : before running thread")
-    x.start()
-    logging.info("Main    : wait for the thread to finish")
-    x.join()
-    logging.info("Main    : all done")
+def parallel_execution(my_list):
+    try:
+        response_list = []
+        future_list = []
+        list_count = len(my_list)
+        with ThreadPoolExecutor(max_workers=list_count) as executor:
+            for index in range(list_count):
+                future_list.append(executor.submit(my_multithreading_method, my_list[index], lock))
+            for future in as_completed(future_list):
+                return_value = future.result()
+                response_list.append(return_value[0])
+        return response_list
+    except Exception as error:
+        raise Exception(str(error))

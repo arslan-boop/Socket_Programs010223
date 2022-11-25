@@ -1,4 +1,5 @@
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import requests
 from json import loads
@@ -20,11 +21,19 @@ import DB_transactions3
 import Telebot_v1
 from threading import Thread
 from multiprocessing import Process
+from multiprocessing import Pool
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
+
+# ssl den doğacak hataları bertaraf etmek için
+requests.packages.urllib3.disable_warnings()
 
 # con = sqlite3.connect("TRADE3.db")
 # cursor = con.cursor()
 
 # global v_hedef_bid_global, v_alim_var, v_alim_fiyati
+
 v_hedef_bid_global, v_hedef_ask_global, v_alim_var, v_alim_fiyati = 0, 0, 0, 0
 v_last_price_g = 0
 
@@ -33,7 +42,7 @@ v_last_price_g = 0
 def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati
     # global ask_tbl, bid_tbl
-    v_volume_fark_oran = 5  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_volume_fark_oran = 3  # İlgili bid veya ask satırının tüm tablodaki volume oranı
     v_oran = 0.05  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
     v_kar_oran = 1.003
     v_zarar_oran = 0.997
@@ -332,15 +341,33 @@ def get_snapshot(v_sembol, v_limit):
 
 def main_islem(v_sembol_g, v_limit_g, v_inter_g):
     print('Başladı ', v_sembol_g, datetime.now())
-    t1 = threading.Thread(target=run_frontdata, args=(v_sembol_g, v_inter_g))
-    t1.start()
+    global Threadler
+    Threadler = []
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executer:
+             x1 = executer.submit(run_frontdata, v_sembol_g, v_inter_g)
+             x1 = executer.submit(islem, v_sembol_g, v_limit_g)
 
-    t2 = threading.Thread(target=islem, args=(v_sembol_g, v_limit_g))
-    t2.start()
+        print(' iThreat Çalışmaya başladılar...SON')
 
-    t1.join(2)
-    t2.join(2)
-    time.sleep(0.33)
+    except Exception as exp:
+        v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj)
+
+    # t1 = threading.Thread(target=run_frontdata, args=(v_sembol_g, v_inter_g))
+    # t1.start()
+    # time.sleep(1)
+    # #Threadler.append(t1)
+    #
+    # t2 = threading.Thread(target=islem, args=(v_sembol_g, v_limit_g))
+    # t2.start()
+    # #Threadler.append(t2)
+    # time.sleep(1)
+    #
+    # t1.join(3)
+    # t2.join(3)
+
+    #return 'İşlem başarılı'
 
 
 def islem(v_sembol_g, v_limit_g):
@@ -350,13 +377,13 @@ def islem(v_sembol_g, v_limit_g):
         v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
         time.sleep(0.06)
         # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',         len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
-        if v_last_price_g != 0 and len(v_genel_orderbook["bids"])>0:
+        if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
             whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook)
 
 
 def startup(v_tip):
     global v_limit_g, v_sembol_g, v_inter_g
-    global v_dosya_coin, Procesler, v_alim_var
+    global v_dosya_coin, Procesler, v_alim_var, Threadler
     # print('Başladı ', datetime.now())
     v_inter_g = '1s'
     v_limit_g = 1000
@@ -364,7 +391,7 @@ def startup(v_tip):
 
     if v_tip == 1:
         dosya_aktar()
-        p = 1
+        p = 0
         for p in range(len(v_dosya_coin)):
             v_sembol_g = v_dosya_coin[p]
             # print('Dosyada ', p, v_dosya_coin[p])
@@ -379,11 +406,15 @@ def startup(v_tip):
             print('Processler Açıldı..', Procesler)
 
         for x in Procesler:
-            x.join(15)
+            x.join(10)
         # print('SON')
         return
     else:
         # kill prosesler
+        for x in Threadler:
+            x.terminate()
+            print('Tretler kapatıldı', Procesler)
+
         for x in Procesler:
             x.terminate()
             print('Processler kapatıldı', Procesler)
@@ -392,16 +423,25 @@ def startup(v_tip):
         Procesler = []
         return
 
-
 if __name__ == '__main__':
-    global v_dosya_coin, Procesler
     v_dosya_coin = []
     Procesler = []
+    # global v_limit_g, v_sembol_g, v_inter_g
+    # print('Başladı ', datetime.now())
+    v_inter_g = '1s'
+    v_limit_g = 1000
+    v_in_g = '1000ms'
     try:
-        while True:
-            startup(1)
-            time.sleep(300)
-            startup(0)
+        dosya_aktar()
+        #
+        #print('ilk coooo', v_dosya_coin[0],len(v_dosya_coin))
+        with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
+            for p in range(len(v_dosya_coin)):
+                v_sembol_g = v_dosya_coin[p]
+                #print('Dosyada ', p, v_dosya_coin[p])
+                x1= executer.submit(main_islem, v_sembol_g, v_limit_g, v_inter_g)
+
+        print('Çalışmaya başladılar...SON', x1.result())
     except Exception as exp:
         v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
