@@ -18,21 +18,21 @@ cursor = con.cursor()
 #                    "Buy_Price REAL, Buy_Time TEXT, Date_System TEXT, Sell_Price REAL, Result TEXT , Percent REAL, Desc_coin TEXT, Sell_Time TEXT) ")
 #     con.commit()
 
-def Add_value(v_name, v_period, v_buy_price, v_buy_time, v_date, v_sell_price, v_result, v_percent, v_desc, v_sell_time,v_balance):
+def Add_value(v_name, v_period, v_buy_price, v_buy_time, v_date, v_sell_price, v_result, v_percent, v_desc, v_sell_time,v_balance,v_cursor,v_con):
     my_data=(v_name, v_period, v_buy_price, v_buy_time, v_date, v_sell_price, v_result, v_percent, v_desc,v_sell_time,v_balance)
     my_query="INSERT INTO Trade_Logs values(?,?,?,?,?,?,?,?,?,?,?)"
-    cursor.execute(my_query,my_data)
-    con.commit()
+    v_cursor.execute(my_query,my_data)
+    v_con.commit()
     #con.close()
-def Add_Log(v_name,v_tip):
+def Add_Log(v_name,v_tip,v_cursor,v_con):
     my_query="INSERT INTO Trade_Logs_Main(Coin_name, Period, Buy_Price, Buy_Time, Date_System, Sell_Price," \
              " Result, Percent, Desc_coin,Sell_Time, Balance) " \
              "SELECT Coin_name, Period, Buy_Price, Buy_Time, Date_System," \
              " Sell_Price, Result, Percent, Desc_coin, Sell_Time, Balance  FROM Trade_Logs  WHERE  Coin_name = ? and Desc_coin=?"
     my_data = (v_name,v_tip)
     #cursor.execute(my_query,[my_data])
-    cursor.execute(my_query, my_data)
-    con.commit()
+    v_cursor.execute(my_query, my_data)
+    v_con.commit()
     #con.close()
 def Update_Table(v_name,v_sell_price, v_result, v_percent, v_sell_time,v_tip,v_balance):
     my_query="UPDATE Trade_Logs SET Sell_Price=? ,Sell_Time=?, Result=?, Percent=?, Balance=?  WHERE Coin_name =? and Desc_coin=? "
@@ -78,7 +78,7 @@ def Sel_USDT(v_name): #, v
         v_semboldos = open("Sembol3.txt", "w")
         my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
         cursor.execute(my_query)
-        i = 45
+        i = 60
         record = cursor.fetchmany(i) #.fetchall()
         for x in record:
             #print(x, 'kayıt= ', record[0])
