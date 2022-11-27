@@ -215,7 +215,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook,v_open_pr
         v_alabilirsin =0
         #v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
         #if v_1m_c>0  and v_3m_c > 0 and v_5m_c > 0:
-        if v_son_fiyat >=v_open_pri:
+        if float(v_son_fiyat) >=float(v_open_pri):
             v_alabilirsin = 1
 
         if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and v_vol_oran_bid >= v_volume_fark_oran and v_alabilirsin ==1:
