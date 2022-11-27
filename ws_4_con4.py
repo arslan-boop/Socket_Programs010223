@@ -26,6 +26,7 @@ from multiprocessing import Pool
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import wait
 
 # ssl den doğacak hataları bertaraf etmek için
 requests.packages.urllib3.disable_warnings()
@@ -209,15 +210,9 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
             print('İçerde alım var ama henüz satılamadı...!- ', v_symbol, ' - Hedefi = ', str(v_hedef_bid_global),
                   'Son Fiyat = ', str(v_son_fiyat))
     else:
-
-        # Alırken de trende bakacak
-        v_alabilirsin =0
-        v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-        if v_1m_c>0  and v_3m_c > 0 and v_5m_c > 0:
-            v_alabilirsin = 1
-
-        if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and v_vol_oran_bid >= v_volume_fark_oran and v_alabilirsin ==1:
-            print('SEMBOL', v_symbol, '***ARTMALI *** HEDEF == ', "{:.6f}".format(float(v_hedef_bid)), ' Zaman = ', v_time)
+        if (v_bid_len > 0) and (v_bidask_fark_tutar >= 0) and (v_vol_oran_bid >= v_volume_fark_oran):
+            print('SEMBOL', v_symbol, '***ARTMALI *** HEDEF == ', "{:.6f}".format(float(v_hedef_bid)), ' Zaman = ',
+                  v_time)
             v_mess = str(v_symbol) + '--' + '***ARTMALI *** HEDEF == ' + '--' + "{:.6f}".format(float(v_hedef_bid)) + \
                      '--' + ' Zaman = ' + '--' + str(v_time) + '--' + 'Son Fiyat = ' + '--' + "{:.6f}".format(
                 float(v_son_fiyat))
@@ -292,15 +287,12 @@ def dosya_aktar():
         for line in dosya.read().splitlines():
             v_symbol = line
             v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-            if v_3m_c > 0 and v_5m_c and v_15m_c  and v_60m_c> 0:
-                if i <= 20 :
-                    v_dosya_coin.append(line)
-                    print('Dosyaya eklenen Coin..: ', line, i)
-                else:
-                    print('Devamı...Dosyaya eklenen Coin..: ', line, i)
+            if v_3m_c > 0 and v_5m_c > 0:
+                v_dosya_coin.append(line)
+                print('Dosyaya eklenen Coin..: ', line, i)
                 i += 1
     dosya.close()
-    print('Dosya Tamamlandı', v_dosya_coin)
+    print('Dosya Tamamlandı')
 
 
 def check_change(v_symbol, v_interval, v_limit):
@@ -366,9 +358,8 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g):
     print('Başladı ', v_sembol_g, datetime.now())
     try:
         run_frontdata(v_sembol_g, v_inter_g)
-        time.sleep(1)
         islem(v_sembol_g, v_limit_g)
-        #time.sleep(5)
+        time.sleep(5)
     except Exception as exp:
         v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
@@ -395,30 +386,27 @@ def startup(v_tip):
 
     if v_tip == 1:
         dosya_aktar()
-        p = 0
-        for p in range(len(v_dosya_coin)):
-            v_sembol_g = v_dosya_coin[p]
-            # print('Dosyada ', p, v_dosya_coin[p])
-            t = Process(target=main_islem, args=(v_sembol_g, v_limit_g, v_inter_g))
-            Procesler.append(t)
-            # print('sayısı', str(Procesler))
-            p = p + 1
-
-        # print('ttt',threads)
-        for x in Procesler:
-            x.start()
-            print('Processler Açıldı..', Procesler)
-
-        for x in Procesler:
-            x.join(10)
-        # print('SON')
+        with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
+            results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g) for p in
+                       range(len(v_dosya_coin))]
+            # for p in range(len(v_dosya_coin)):
+            #     son = executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g)
+            for f in results:
+                print(f)
+                Procesler.append(f)
+                print('Prolar', Procesler)
+            print('Prolar çıkıyorrrr', Procesler)
+        return
+        #
+        # for sonuc in Procesler:
+        #     sonuc.add_done_callback(progress_indicator)
+        #     print('bbb processlar', Procesler)
+        #     #
+        # for f in concurrent.futures.as_completed(results):
+        #     print(f.result())
+        print('bbbbbbbbbProlar çıkıyorrrr', Procesler)
         return
     else:
-        # kill prosesler
-        for x in Threadler:
-            x.terminate()
-            print('Tretler kapatıldı', Procesler)
-
         for x in Procesler:
             x.terminate()
             print('Processler kapatıldı', Procesler)
@@ -428,24 +416,29 @@ def startup(v_tip):
         return
 
 
+def progress_indicator(future):
+    print('.', end='', flush=True)
+
+
 if __name__ == '__main__':
     v_dosya_coin = []
     Procesler = []
     # global v_limit_g, v_sembol_g, v_inter_g
     # print('Başladı ', datetime.now())
-    v_inter_g = '1s'
-    v_limit_g = 1000
-    v_in_g = '1000ms'
+    # v_inter_g = '1s'
+    # v_limit_g = 1000
+    # v_in_g = '1000ms'
     try:
-        dosya_aktar()
+        while True:
+            w1 = threading.Thread(target=startup,args=(1,) )
+            w1.start()
+            # time.sleep(5)
+            w1.join(20)
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
-            results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g) for p in  range(len(v_dosya_coin))]
-
-            for f in concurrent.futures.as_completed(results):
-                print(f.result())
-
-        print('Çalışmaya başladılar...SON')
+            #startup(1)
+            time.sleep(20)
+            startup(0)
+            print('Çalışmaya başladılar...SON')
     except Exception as exp:
         v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
