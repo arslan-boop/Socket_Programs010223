@@ -57,7 +57,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
     v_volume_fark_oran = 3  # İlgili bid veya ask satırının tüm tablodaki volume oranı
     v_oran = 0.05  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
     v_kar_oran = 1.003
-    v_zarar_oran = 0.997
+    v_zarar_oran = 0.99
     minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
 
     # print(datetime.now(), '-', 'WHALE BAŞI ', '-', str(v_son_fiyat), '-', v_symbol, '-',  str(v_limit), '-', str(v_son_fiyat), '-', str(len(v_genel_orderbook)))
