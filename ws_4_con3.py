@@ -48,10 +48,11 @@ cursor = con.cursor()
 
 v_hedef_bid_global, v_hedef_ask_global, v_alim_var, v_alim_fiyati = 0, 0, 0, 0
 v_last_price_g = 0
+v_open_price = 0
 
 
 # **************************************************************************************
-def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
+def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook,v_open_pri):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati
     # global ask_tbl, bid_tbl
     v_volume_fark_oran = 3  # İlgili bid veya ask satırının tüm tablodaki volume oranı
@@ -210,10 +211,11 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
                   'Son Fiyat = ', str(v_son_fiyat))
     else:
 
-        # Alırken de trende bakacak
+        #Alırken de trende bakacak
         v_alabilirsin =0
-        v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-        if v_1m_c>0  and v_3m_c > 0 and v_5m_c > 0:
+        #v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
+        #if v_1m_c>0  and v_3m_c > 0 and v_5m_c > 0:
+        if v_son_fiyat >=v_open_pri:
             v_alabilirsin = 1
 
         if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and v_vol_oran_bid >= v_volume_fark_oran and v_alabilirsin ==1:
@@ -251,11 +253,12 @@ def on_close_f(ws_front):
 
 
 def on_message_f(ws_front, message):
-    global v_last_price_g
+    global v_last_price_g,v_open_price
     json_message = json.loads(message)
     # print('Gelen mesaj: ', json_message)
     candle = json_message['k']
     v_last_price_g = candle['c']
+    v_open_price = candle['o']
 
 
 # print(datetime.now(), 'SEMBOL=', str(json_message['s']), 'Son fiyat  = ', v_last_price_g)
@@ -375,14 +378,14 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g):
 
 
 def islem(v_sembol_g, v_limit_g):
-    global v_last_price_g
+    global v_last_price_g, v_open_price
     v_genel_orderbook = []
     while (True):
         v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
         time.sleep(1)
         # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',         len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
         if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
-            whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook)
+            whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook,v_open_price)
 
 
 def startup(v_tip):
