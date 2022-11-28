@@ -244,7 +244,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
 
             # Alımlar dizisine ekle
             if genel_alimlar.count(v_symbol) == 0:
-                genel_alimlar.append(v_symbol)
+               genel_alimlar.append(v_symbol)
             #     print(str(v_symbol), ' Alımlar dizisine eklendi.....!!', )
             #     print(genel_alimlar)
         else:
