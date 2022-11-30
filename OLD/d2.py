@@ -1,3 +1,4 @@
+import multiprocessing
 import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -19,7 +20,7 @@ import talib as ta
 import numpy as np
 import DB_transactions3
 import Telebot_v1
-from threading import Thread
+# from threading import Thread
 from multiprocessing import Process
 from multiprocessing import Pool
 import concurrent.futures
@@ -29,23 +30,32 @@ from concurrent.futures import ProcessPoolExecutor
 # ssl den doğacak hataları bertaraf etmek için
 requests.packages.urllib3.disable_warnings()
 
-# con = sqlite3.connect("TRADE3.db")
+# con = sqlite3.connect("TRADE3.DB")
 # cursor = con.cursor()
+
+DB_FILE = "../TRADE3.DB"
+con = sqlite3.connect(DB_FILE, timeout=10)
+cursor = con.cursor()
 
 # global v_hedef_bid_global, v_alim_var, v_alim_fiyati
 
 v_hedef_bid_global, v_hedef_ask_global, v_alim_var, v_alim_fiyati = 0, 0, 0, 0
 v_last_price_g = 0
+v_open_price = 0
 
+genel_alimlar = []
+
+
+# Procesler = []
 
 # **************************************************************************************
-def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
+def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_pri):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati
     # global ask_tbl, bid_tbl
-    v_volume_fark_oran = 3  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_volume_fark_oran = 0.1  # İlgili bid veya ask satırının tüm tablodaki volume oranı
     v_oran = 0.05  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
     v_kar_oran = 1.003
-    v_zarar_oran = 0.997
+    v_zarar_oran = 0.99
     minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
 
     # print(datetime.now(), '-', 'WHALE BAŞI ', '-', str(v_son_fiyat), '-', v_symbol, '-',  str(v_limit), '-', str(v_son_fiyat), '-', str(len(v_genel_orderbook)))
@@ -150,7 +160,8 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
     # Alım olmuşsa hedefe gelmişmi kontrolü
     # **********************************************************
     if v_alim_var == 1:
-        print('İçerde alım var.......!!', 'Hedefi = ', str(v_hedef_bid_global), 'Son Fiyat = ', str(v_son_fiyat))
+        print(str(v_symbol), 'İçerde alım var.......!!', 'Hedefi = ', str(v_hedef_bid_global), 'Son Fiyat = ',
+              str(v_son_fiyat))
 
         if float(v_son_fiyat) >= float(v_hedef_bid_global):
             v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
@@ -161,18 +172,23 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
                       '- Alım Fiyatı :' + "{:.6f}".format(float(v_alim_fiyati)) + \
                       ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + '- Kar Oranı :' + "{:.6f}".format(
                 float(v_profit_oran)) + ' - Zaman : ' + str(v_time)
+            v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
+                float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
+                               '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(v_time)
             print(v_mess1)
+            # ******************
             Telebot_v1.mainma(v_mess1)
+            Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
+
             v_alim_var = 0
             v_time = str(datetime.now())
             v_time = v_time[0:19]
-            # DB ye ekleme**********************************************************************************************
-            # v_balance = DB_transactions3.Select_Balance(3)
-            # v_balance = float(v_balance + ((v_balance * v_profit_oran) / 100))
-            # v_komisyon = float(2 * (v_balance / 1000))
-            # v_balance = v_balance - v_komisyon
-            # DB_transactions3.Add_value(v_symbol, '1m', v_alim_fiyati, None, v_time, v_son_fiyat, 'Kar', v_profit_oran, 'T3', v_time, v_balance)
-            # ***********************************************************************************************************
+
+            # Alımlar dizisinde ilgili coini sil
+            genel_alimlar.remove(v_symbol)
+            print(str(v_symbol), ' Alımlar dizisinden silindi........!!', )
+            print(genel_alimlar)
+
         elif float(v_son_fiyat) < float(v_hedef_ask_global):
             v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
             v_zarprofit_oran = float(v_zarprofit_oran)
@@ -183,35 +199,42 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
                       ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + '- Zarar Oranı :' + "{:.6f}".format(
                 float(v_zarprofit_oran)) + ' - Zaman : ' + str(v_time)
             print(v_mess1)
+            v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
+                float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
+                               '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(v_time)
+
             Telebot_v1.mainma(v_mess1)
+            Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
+
             v_alim_var = 0
             v_time = str(datetime.now())
             v_time = v_time[0:19]
-            # DB ye ekleme**********************************************************************************************
-            # v_balance = DB_transactions3.Select_Balance(3)
-            # v_balance = float(v_balance - ((v_balance * v_zarprofit_oran) / 100))
-            # v_komisyon = float(2 * (v_balance / 1000))
-            # v_balance = v_balance - v_komisyon
-            # DB_transactions3.Add_value(v_symbol, '1m', v_alim_fiyati, None, v_time, v_son_fiyat, 'Zarar', v_zarprofit_oran,'T3', v_time, v_balance)
-            # # ***********************************************************************************************************
+
+            # Alımlar dizisinde ilgili coini sil
+            genel_alimlar.remove(v_symbol)
+            print(str(v_symbol), ' Alımlar dizisinden silindi........!!', )
+            print(genel_alimlar)
+
         else:
             print('İçerde alım var ama henüz satılamadı...!- ', v_symbol, ' - Hedefi = ', str(v_hedef_bid_global),
                   'Son Fiyat = ', str(v_son_fiyat))
     else:
-        if (v_bid_len > 0) and (v_bidask_fark_tutar >= 0) and (v_vol_oran_bid >= v_volume_fark_oran):
-            # Toplam hacme göre oran (Bid ve Askların toplamı). Oran ne kadar büyükse teklif o kadar yüksektir.
-            # Son fiyatı geçen tekliflerin toplamı ile son fiyat arasındaki fark önemli olacak
-            # print('Oranlar = ', v_vol_oran_bid, '-', v_volume_fark_oran, '-', str(float(bid_tbl.iloc[0, 0])), '-', v_son_fiyat)
+
+        # Alırken de trende bakacak
+        v_alabilirsin = 0
+        # v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
+        # if v_1m_c>0  and v_3m_c > 0 and v_5m_c > 0:
+        if float(v_son_fiyat) >= float(v_open_pri):
+            v_alabilirsin = 1
+
+        if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and v_vol_oran_bid >= v_volume_fark_oran and v_alabilirsin == 1:
             print('SEMBOL', v_symbol, '***ARTMALI *** HEDEF == ', "{:.6f}".format(float(v_hedef_bid)), ' Zaman = ',
                   v_time)
-            # print('Güncel Fiyat= ', "{:.6f}".format(float(v_son_fiyat)), ' Teklif Fiyatı = ', float(bid_tbl.iloc[0, 0]),
-            #       ' Teklif Total = ', "{:.1f}".format(float(bid_tbl['volume'].sum())),
-            #       'Teklif/Total Volume Oran=(%)', "{:.2f}".format(float(v_vol_oran_bid)))
-            # ' Telif Total = ', "{:.1f}".format(float(bid_tbl.iloc[0, 2])), 'Volume Oran=(%)', "{:.2f}".format(v_vol_oran_bid))
-            # print('Güncel = ', v_son_fiyat ) #, ' Teklif = ',bid_tbl_son.head(1) )
             v_mess = str(v_symbol) + '--' + '***ARTMALI *** HEDEF == ' + '--' + "{:.6f}".format(float(v_hedef_bid)) + \
                      '--' + ' Zaman = ' + '--' + str(v_time) + '--' + 'Son Fiyat = ' + '--' + "{:.6f}".format(
                 float(v_son_fiyat))
+
+            # Telegram mesajo
             Telebot_v1.mainma(v_mess)
             v_alim_fiyati = v_son_fiyat
             v_hedef_bid_global = v_hedef_bid
@@ -219,29 +242,20 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook):
             v_alim_var = 1
             print('****************Teklifler = ********************')
             print(bid_tbl)
-            # ************************DB yee ekleme
-            # v_bakiye = DB_transactions3.Select_Balance(3)
-            # DB_transactions3.Add_value(v_symbol, '1m', v_son_fiyat, v_time, v_time, None, None, None, 'T3', None, v_bakiye)
-            # DB_transactions3.con.commit()
-            # **************************************
-        else:
-            print('Alım için Uygun Emir Bulunamadı..........!!!!!!!!!!!!!!!', v_symbol)
-        """
-        elif v_ask_len > 0 and v_bidask_fark_tutar <= 0 and float(v_vol_oran_ask) >= float(v_volume_fark_oran):
-            # Toplam hacme göre oran (Bid ve Askların toplamı)
-            print('SEMBOL', v_symbol, '*****DÜŞMELİ *** HEDEF == ', "{:.5f}".format(float(v_hedef_ask)), ' Zaman = ',  v_time)
-            # print('Güncel Fiyat= ', "{:.5f}".format(float(v_son_fiyat)), ' Talep Fiyatı = ', float(ask_tbl.iloc[0, 0]),
-            #       'Talep Total = ', "{:.1f}".format(float(ask_tbl['volume'].sum())), 'Talep/Total Volume Oran=(%)',
-            #       "{:.2f}".format(v_vol_oran_ask))
-            # print('Güncel = ', v_son_fiyat ) #, ' Teklif = ',bid_tbl_son.head(1) )
-            v_mess = str(v_symbol) + '--' + 'Son Fiyat=' + '--' + "{:.5f}".format(float(v_son_fiyat)) + '--' + \
-                     '***DÜŞMELİ *** HEDEF == ' + '--' + "{:.5f}".format(float(v_hedef_ask)) + '--' + ' Zaman = ' + '--' + str(v_time)
 
-            Telebot_v1.mainma(v_mess)
-            v_alim_var = 1
-            print('**********************Talepler = ************************')
-            print(ask_tbl)
-        """
+            Telebot_v1.genel_alimlar(v_symbol, 'A')
+
+            # Alımlar dizisine ekle
+            # if  genel_alimlar.count(v_symbol) == 0:
+            genel_alimlar.append(v_symbol)
+            # buyy.append(v_symbol)
+            print(str(v_symbol), ' Alımlar dizisine eklendi.....!!', )
+            print(genel_alimlar)
+            # print(buyy)
+
+        else:
+            print('Alım için Uygun Emir Bulunamadı.!', v_symbol, datetime.now())
+            # print('Genel Alımlar = ', genel_alimlar)
 
 
 # *******************************************************Frontun soketi
@@ -250,6 +264,8 @@ def on_open_f(ws_front):
     subscribe_message = {"method": "SUBSCRIBE", "params": vn_front, "id": 1}
     ws_front.send(json.dumps(subscribe_message))
     print('opened connection', subscribe_message)
+    # active_t = threading.active_count()
+    # print('Active Treat sayısı_2', active_t)
 
 
 def on_error_f(ws_front):
@@ -261,17 +277,20 @@ def on_close_f(ws_front):
 
 
 def on_message_f(ws_front, message):
-    global v_last_price_g
+    global v_last_price_g, v_open_price
     json_message = json.loads(message)
     # print('Gelen mesaj: ', json_message)
     candle = json_message['k']
     v_last_price_g = candle['c']
-    # print(datetime.now(), 'SEMBOL=', str(json_message['s']), 'Son fiyat  = ', v_last_price_g)
+    v_open_price = candle['o']
+
+
+# print(datetime.now(), 'SEMBOL=', str(json_message['s']), 'Son fiyat  = ', v_last_price_g)
 
 
 # 1 saniyelik stream verilerle kline daki son fiyatı vs alır
 def socket_front(v_symbol, v_inter):
-    global vn_front, ws_front_g
+    global vn_front
     v_symbol = v_symbol.lower()
     v_sembol_deg1 = f'[{v_symbol}@kline_{v_inter}]'
     v_sembol_deg5 = v_sembol_deg1.replace("[", "")
@@ -280,27 +299,36 @@ def socket_front(v_symbol, v_inter):
     socket_f = 'wss://stream.binance.com:9443/ws'
     # ws_front = websocket.WebSocketApp(socket_f, on_message=on_message_f, on_open=on_open_f, on_close=on_close_f, on_error=on_error_f)
     ws_front = websocket.WebSocketApp(socket_f, on_message=on_message_f, on_open=on_open_f, on_close=on_close_f)
-    ws_front.run_forever()
+    wst = threading.Thread(target=ws_front.run_forever)
+    wst.start()
+    # time.sleep(5)
+    wst.join(2)
+
 
 
 # **************************************************************************************
 def dosya_aktar():
     global v_dosya_coin
+
     DB_transactions3.USDT_Tablo_Yaz()
     DB_transactions3.File_write()
     DB_transactions3.con.commit()
+
     v_dosya_coin = []
-    with open('Sembol3.txt', 'r') as dosya:
+    with open('../Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_symbol = line
             v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-            if v_3m_c > 0 and v_5m_c > 0:
-                v_dosya_coin.append(line)
-                print('Dosyaya eklenen Coin..: ', line, i)
+            if v_3m_c > 0 and v_5m_c and v_15m_c and v_60m_c > 0:
+                if i <= 20:
+                    v_dosya_coin.append(line)
+                    print('Dosyaya eklenen Coin..: ', line, i)
+                else:
+                    print('Devamı...Dosyaya eklenen Coin..: ', line, i)
                 i += 1
     dosya.close()
-    print('Dosya Tamamlandı')
+    print('Dosya Tamamlandı', v_dosya_coin)
 
 
 def check_change(v_symbol, v_interval, v_limit):
@@ -346,14 +374,14 @@ def check_change(v_symbol, v_interval, v_limit):
 
 
 def run_frontdata(v_sem, v_int):
-    while (True):
-        try:
-            socket_front(v_sem, v_int)
-            time.sleep(0.03)
-        except Exception as exp:
-            v_hata_mesaj = 'Hata Oluştu!!..run_frontdata  = ' + str(exp)
-            Telebot_v1.mainma(v_hata_mesaj)
-            time.sleep(2)
+    # while (True):
+    try:
+        socket_front(v_sem, v_int)
+        # time.sleep(2)
+    except Exception as exp:
+        v_hata_mesaj = 'Hata Oluştu!!..run_frontdata  = ' + str(exp)
+        Telebot_v1.mainma(v_hata_mesaj)
+        time.sleep(2)
 
 
 def get_snapshot(v_sembol, v_limit):
@@ -362,52 +390,25 @@ def get_snapshot(v_sembol, v_limit):
     return loads(r.content.decode())
 
 
+# Her bir process için
 def main_islem(v_sembol_g, v_limit_g, v_inter_g):
-    print('Başladı ', v_sembol_g, datetime.now())
-    global Threadler
-    Threadler = []
     try:
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executer:
-        #     x1 = executer.submit(run_frontdata, v_sembol_g, v_inter_g)
-        #     x1 = executer.submit(islem, v_sembol_g, v_limit_g)
-        #
-        t1 = threading.Thread(target=run_frontdata, args=(v_sembol_g, v_inter_g))
-        t1.start()
-        t2 = threading.Thread(target=islem, args=(v_sembol_g, v_limit_g))
-        t2.start()
-        t1.join(2)
-        t2.join(2)
-        print(' iThreat Çalışmaya başladılar...SON')
-
+        run_frontdata(v_sembol_g, v_inter_g)
+        islem(v_sembol_g, v_limit_g)
     except Exception as exp:
         v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
 
-    # t1 = threading.Thread(target=run_frontdata, args=(v_sembol_g, v_inter_g))
-    # t1.start()
-    # time.sleep(1)
-    # #Threadler.append(t1)
-    #
-    # t2 = threading.Thread(target=islem, args=(v_sembol_g, v_limit_g))
-    # t2.start()
-    # #Threadler.append(t2)
-    # time.sleep(1)
-    #
-    # t1.join(3)
-    # t2.join(3)
-
-    # return 'İşlem başarılı'
-
 
 def islem(v_sembol_g, v_limit_g):
-    global v_last_price_g
+    global v_last_price_g, v_open_price
     v_genel_orderbook = []
     while (True):
         v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
-        time.sleep(0.06)
+        time.sleep(1)
         # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',         len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
         if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
-            whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook)
+            whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook, v_open_price)
 
 
 def startup(v_tip):
@@ -453,32 +454,84 @@ def startup(v_tip):
         return
 
 
+# simple progress indicator callback function
+def progress_indicator(future):
+    print('.', end='', flush=True)
+
+
 if __name__ == '__main__':
+    global Procesler
     v_dosya_coin = []
-    Procesler = []
-    # global v_limit_g, v_sembol_g, v_inter_g
-    # print('Başladı ', datetime.now())
+    global buyy
+    buyy = []
+
     v_inter_g = '1s'
     v_limit_g = 1000
-    v_in_g = '1000ms'
+    # v_in_g = '1000ms'
     try:
-        dosya_aktar()
-        #
-        # print('ilk coooo', v_dosya_coin[0],len(v_dosya_coin))
-        # with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
-        #     for p in range(len(v_dosya_coin)):
-        #         v_sembol_g = v_dosya_coin[p]
-        #         # print('Dosyada ', p, v_dosya_coin[p])
-        #         x1 = executer.submit(main_islem, v_sembol_g, v_limit_g, v_inter_g)
+        while True:
+            print('Başla.........', datetime.now())
+            dosya_aktar()
+            with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
+                results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g) for p in
+                           range(len(v_dosya_coin))]
+                print('Başla.', results)
+                while True:
+                    # print('Başla.....222......', datetime.now())
+                    time.sleep(20)
+                    # print(' Alımlar dizisi.....!!', buyy)
+                    # active = multiprocessing.active_children()
+                    active_t = threading.active_count()
+                    # current_th = threading.currentThread()
+                    # current_th1 = threading.current_thread()
+                    # main_th = threading.main_thread()
+                    # main_th1 = threading.get_native_id
+                    print('Active Treat sayısı', active_t, threading.currentThread(),threading.main_thread() )
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
-            results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g) for p in
-                       range(len(v_dosya_coin))]
+                    v_alim_var = 0
+                    if v_alim_var == 0:
+                        active = multiprocessing.active_children()
+                        # terminate all active children
+                        for child in active:
+                            child.terminate()
+                            # block until all children have closed
+                        for child in active:
+                            child.join()
+                            # report active children
+                        active = multiprocessing.active_children()
+                        print(f'Active Children: {len(active)}')
+                        #
+                        # active_t = threading.active_count()
+                        # print('Active Treat sayısı_2', active_t)
+                        #
+                        # active_t = threading.active_count()
+                        # threading.main_thread().join(2)
+                        # active_t = threading.active_count()
 
-            for f in concurrent.futures.as_completed(results):
-                print(f.result())
+                        # current_th = threading.currentThread()
+                        # current_th1 = threading.current_thread()
+                        # main_th = threading.main_thread()
+                        # main_th1 = threading.get_native_id
+                        print('Active Treat sayısı', active_t)
+                        #
+                        #
+                        # active_t = threading.active_count()
+                        # print('Active Treat sayısı_2', active_t)
+                        #
+                        # # report active children
+                        # active = multiprocessing.active_children()
+                        # print(f'Active Children: {len(active)}')
+                        #
+                        # active_t = threading.active_count()
+                        # print('Active Treat sayısı_2', active_t)
 
-        print('Çalışmaya başladılar...SON')
+                        v_m = 'Tüm Processler Kapatıldı...Yeniden başlanacak = ' + str(datetime.now())
+                        print('Tüm Processler Kapatıldı...Yeniden başlanacak = ')
+                        Telebot_v1.mainma(v_m)
+                        break
+
+        print('Program Sonlandı....')
+        # executer.shutdown()
     except Exception as exp:
         v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)

@@ -3,11 +3,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import ws_4_main_s
 import threading
-import time
 from datetime import datetime
-import Telebot_v1
-from multiprocessing import Process
-from multiprocessing.pool import Pool
 
 
 def sel(isim):

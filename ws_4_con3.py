@@ -496,3 +496,4 @@ if __name__ == '__main__':
     except Exception as exp:
            v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
            Telebot_v1.mainma(v_hata_mesaj)
+a

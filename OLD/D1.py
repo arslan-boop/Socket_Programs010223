@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 
-DB_FILE = "TRADE3.DB"
+DB_FILE = "../TRADE3.DB"
 conn3 = sqlite3.connect(DB_FILE, timeout=60)
 cursor3 = conn3.cursor()
 

@@ -262,7 +262,7 @@ def socket_front(v_symbol, v_inter):
 def dosya_aktar():
     global v_dosya_coin
     v_dosya_coin = []
-    with open('Sembol3.txt', 'r') as dosya:
+    with open('../Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_dosya_coin.append(line)
