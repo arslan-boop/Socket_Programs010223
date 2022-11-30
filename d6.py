@@ -22,7 +22,7 @@ import DB_transactions3
 import Telebot_v1
 # from threading import Thread
 from multiprocessing import Process
-from multiprocessing import Pool
+from multiprocessing import Pool, Array
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
@@ -385,9 +385,13 @@ def get_snapshot(v_sembol, v_limit):
 def main_islem(v_sembol_g, v_limit_g, v_inter_g):
     print('Başladı ', v_sembol_g, datetime.now())
     try:
+        # va[0] = 1
+        # va[1] = 2
         run_frontdata(v_sembol_g, v_inter_g)
         time.sleep(5)
+        #islem(v_sembol_g, v_limit_g, v_var)
         islem(v_sembol_g, v_limit_g)
+
         # time.sleep(5)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..main_islem  = ' + str(exp) + str(datetime.now())
@@ -397,12 +401,16 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g):
 def islem(v_sembol_g, v_limit_g):
     global v_last_price_g, v_open_price
     v_genel_orderbook = []
-    while (True):
-        v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
-        time.sleep(0.3)
-        # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',         len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
-        if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
-            whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook, v_open_price)
+    try:
+        while (True):
+            v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
+            time.sleep(0.3)
+            # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',         len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
+            if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
+                whale_order_full(v_sembol_g, v_limit_g, v_last_price_g, v_genel_orderbook, v_open_price)
+    except Exception as exp:
+           v_hata_mesaj = 'Ana Program Hata Oluştu!!.. islem = ' + str(exp) + str(datetime.now())
+           Telebot_v1.mainma(v_hata_mesaj)
 
 
 def startup(v_tip):
@@ -447,6 +455,14 @@ def startup(v_tip):
         Procesler = []
         return
 
+def task(variable):
+    # prepare string data
+    data =  b'str(v_last_price_g)'
+    # store value
+    variable.value = str(data)
+    # report progress
+    print(f'Wrote: {data}', flush=True)
+
 
 if __name__ == '__main__':
     v_dosya_coin = []
@@ -456,24 +472,22 @@ if __name__ == '__main__':
     v_inter_g = '1s'
     v_limit_g = 1000
     v_in_g = '1000ms'
+
+
     try:
-        # dosya_aktar()
-        #
-        # with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
-        #     results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g) for p in  range(len(v_dosya_coin))]
-        #
-        #     for f in concurrent.futures.as_completed(results):
-        #         print(f.result())
+
         while True:
             print('Başladı.........', datetime.now())
             dosya_aktar()
             with concurrent.futures.ProcessPoolExecutor(max_workers=len(v_dosya_coin)) as executer:
-                results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g) for p in
-                           range(len(v_dosya_coin))]
+                results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g) for p in   range(len(v_dosya_coin))]
                 # print('Başla.', results)
+                time.sleep(15)
+
                 while True:
                     # print('Başla.....222......', datetime.now())
                     time.sleep(60)
+
                     active = multiprocessing.active_children()
                     #print(f'Active Children: {active}')
 

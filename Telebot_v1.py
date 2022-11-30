@@ -19,15 +19,23 @@ def kar_zarar_durumu(mess):
         f.write(message+"\n")
         #f.write(message)
         f.close()
+def dosyalari_temizle():
+    open("Alinanlar.txt", 'w').close()
+    open("Satilanlar.txt", 'w').close()
+
 def genel_alimlar(v_sembol,v_tip):
     if v_tip == 'A':
-        with open("genel_buy.txt", "a", encoding="utf-8") as f:
+        with open("Alinanlar.txt", "a", encoding="utf-8") as f:
             # f.write("\n"+message)
             f.write(v_sembol + "\n")
             # f.write(message)
             f.close()
     else:
-        print('null')
+        with open("Satilanlar.txt", "a", encoding="utf-8") as f:
+            # f.write("\n"+message)
+            f.write(v_sembol + "\n")
+            # f.write(message)
+            f.close()
 
 if __name__ == '__main__':
     mainma("selam")
