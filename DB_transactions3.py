@@ -78,7 +78,7 @@ def Sel_USDT(v_name): #, v
         v_semboldos = open("Sembol3.txt", "w")
         my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
         cursor.execute(my_query)
-        i = 35
+        i = 50
         record = cursor.fetchmany(i) #.fetchall()
         for x in record:
             #print(x, 'kayıt= ', record[0])

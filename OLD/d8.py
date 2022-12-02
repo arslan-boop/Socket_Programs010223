@@ -31,6 +31,7 @@ if __name__ == "__main__":
 
 	# creating new processes
 	p1 = multiprocessing.Process(target=square_list, args=(mylist, q))
+
 	p2 = multiprocessing.Process(target=print_queue, args=(q,))
 
 	# running process p1 to square list
