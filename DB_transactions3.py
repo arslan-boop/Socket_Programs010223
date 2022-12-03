@@ -76,7 +76,7 @@ def Select_Balance(v_tip):
 def Sel_USDT(v_name): #, v
     # Dosyaya açma
         v_semboldos = open("Sembol3.txt", "w")
-        my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
+        my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 2000000 ORDER BY PRICE_CHANGE_PERCENT DESC "
         cursor.execute(my_query)
         i = 50
         record = cursor.fetchmany(i) #.fetchall()
@@ -100,9 +100,9 @@ def Delete_USDT(v_name):
     cursor.execute(my_query,[mydata])
     #cursor.execute(my_query,(mydata))
     con.commit()
-def Add_USDT(v_name, v_last_price, v_price_change, v_price_change_percent,v_time ):
-    my_data=(v_name, v_last_price, v_price_change, v_price_change_percent,v_time)
-    my_query="INSERT INTO USDT_COINS values(?,?,?,?,?)"
+def Add_USDT(v_name, v_last_price, v_price_change, v_price_change_percent,v_volume,v_time ):
+    my_data=(v_name, v_last_price, v_price_change, v_price_change_percent,v_volume,v_time,round(float(float(v_volume)*float(v_last_price))))
+    my_query="INSERT INTO USDT_COINS values(?,?,?,?,?,?,?)"
     cursor.execute(my_query,my_data)
     con.commit()
 def USDT_Tablo_Yaz():
@@ -136,6 +136,9 @@ def USDT_Tablo_Yaz():
     prices = {}
     prices1 = {}
     prices2 = {}
+    prices3 = {}
+    prices4 = {}
+
     for ticker in tickers:
         symbol = ticker['symbol']
         if symbol == 'NBTUSDT':
@@ -151,13 +154,17 @@ def USDT_Tablo_Yaz():
                    prices[symbol] = ticker['lastPrice']
                    prices1[symbol] = ticker['priceChange']
                    prices2[symbol] = ticker['priceChangePercent']
+                   prices3[symbol] = ticker['volume']
+                   #v_usdt_vol = float(prices[symbol] *prices3[symbol])
+
                    # Tabloya Yazma ----------------------------
-                   Add_USDT(symbol,prices[symbol],prices1[symbol],prices2[symbol],v_time)
+                   Add_USDT(symbol,prices[symbol],prices1[symbol],prices2[symbol],prices3[symbol],v_time)
                    # # Dosyaya Yazma ----------------------------
                    # v_semboldos.write(symbol)
                    # v_semboldos.write("\n")
                    # #-----------------------------
-                   print('Sembol =', symbol, 'lastPrice=', prices[symbol],'priceChange', prices[symbol],'priceChangePercent',  prices2[symbol], str(i))
+                   print('Sembol =', symbol, 'lastPrice=', prices[symbol],'priceChange', prices[symbol],'priceChangePercent',
+                         prices2[symbol],'volume',prices3[symbol], str(i))
 
 #*************************************************************************
 if __name__ == '__main__':
