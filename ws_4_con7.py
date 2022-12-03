@@ -50,10 +50,10 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
     # v_client = Client(API_Config.API_KEY, API_Config.API_SECRET)
 
     # global ask_tbl, bid_tbl
-    v_volume_fark_oran = 3  # İlgili bid veya ask satırının tüm tablodaki volume oranı
-    v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
+    v_volume_fark_oran = 10  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_oran = 0.04  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
     v_kar_oran = 1.003
-    v_zarar_oran = 0.99
+    v_zarar_oran = 0.993
     minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
     # print(datetime.now(), '-', 'WHALE BAŞI ', '-', str(v_son_fiyat), '-', v_symbol, '-',  str(v_limit), '-', str(v_son_fiyat), '-', str(len(v_genel_orderbook)))
     # depth_dict = v_spot_client.depth(v_symbol, limit=v_limit)
@@ -147,24 +147,27 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                 # v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
                 # v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
                 # if 1 == 1:  # adx_arti == 1 and stoc_arti == 1:
+                v_1m_c = check_change_dk(v_symbol, '1m', 500)
+                if v_1m_c > 0 :
+                    print('SEMBOL', v_symbol, '***ARTMALI *** HEDEF == ', "{:.6f}".format(float(v_hedef_bid)),
+                          'Fark Tutar = ',"{:.6f}".format(float(v_bidask_fark_tutar)), 'Zaman = ', str(datetime.now())[0:19])
 
-                print('SEMBOL', v_symbol, '***ARTMALI *** HEDEF == ', "{:.6f}".format(float(v_hedef_bid)), ' Zaman = ',
-                      str(datetime.now())[0:19])
+                    v_mess = str(v_symbol) + '--' + '***ARTMALI *** HEDEF == ' + '--' + "{:.6f}".format(float(v_hedef_bid)) + \
+                             '--' + ' Zaman = ' + '--' + str(datetime.now())[0:19] + '--' +  \
+                             'Son Fiyat = ' + '--' + "{:.6f}".format(float(v_son_fiyat)) + '--' + \
+                             'Fark Tutar = ' + '--' + "{:.6f}".format(float(v_bidask_fark_tutar)) + '--' + \
+                             'Teklif Toplamı = '+ '--' + "{:.6f}".format(float(bid_tbl['volume'].sum()))
 
-                v_mess = str(v_symbol) + '--' + '***ARTMALI *** HEDEF == ' + '--' + "{:.6f}".format(
-                    float(v_hedef_bid)) + '--' + \
-                         ' Zaman = ' + '--' + str(datetime.now())[
-                                              0:19] + '--' + 'Son Fiyat = ' + '--' + "{:.6f}".format(float(v_son_fiyat))
+                    # Telegram mesajo
+                    Telebot_v1.mainma(v_mess)
+                    v_alim_fiyati = v_son_fiyat
+                    v_hedef_bid_global = v_hedef_bid
+                    v_hedef_ask_global = v_hedef_ask
+                    v_alim_var = 1
+                    print('****************Teklifler = ********************')
+                    print(bid_tbl)
+                    Telebot_v1.genel_alimlar(v_symbol, 'A')
 
-                # Telegram mesajo
-                Telebot_v1.mainma(v_mess)
-                v_alim_fiyati = v_son_fiyat
-                v_hedef_bid_global = v_hedef_bid
-                v_hedef_ask_global = v_hedef_ask
-                v_alim_var = 1
-                print('****************Teklifler = ********************')
-                print(bid_tbl)
-                Telebot_v1.genel_alimlar(v_symbol, 'A')
             else:
                 print('Alım için Uygun Emir Bulunamadı.!', v_symbol, datetime.now())
         except Exception as exp:
@@ -290,7 +293,7 @@ def dosya_aktar():
             #
             # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
             v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-            if v_3m_c > 0 and v_5m_c > 0:  # and v_15m_c > 0 and v_60m_c > 0:
+            if 1==1: #v_3m_c > 0 : #and v_5m_c > 0 and v_15m_c > 0 and v_60m_c > 0:
                 if i <= 20:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, datetime.now())
@@ -302,6 +305,21 @@ def dosya_aktar():
     dosya.close()
     print('Dosya Tamamlandı', v_dosya_coin)
 
+def check_change_dk(v_symbol, v_interval, v_limit):
+    # v_interval = '1m'
+    # global v_client, v_last_buyed_coin
+    v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
+    klines = v_client.get_klines(symbol=v_symbol, interval=v_interval, limit=v_limit)
+    close = [float(entry[4]) for entry in klines]
+    v_len = len(close)
+    v_l_c_p = close[-1]
+
+    if v_len < 2:
+        return 0, 0, 0, 0, 0
+    else:
+        v_p_c_p2 = close[-2]
+        v_1m_c = float(((v_l_c_p - v_p_c_p2) * 100) / v_p_c_p2)
+    return v_1m_c
 
 def check_change(v_symbol, v_interval, v_limit):
     # v_interval = '1m'
