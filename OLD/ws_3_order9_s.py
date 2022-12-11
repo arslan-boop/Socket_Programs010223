@@ -27,8 +27,7 @@ class Socketine():
         self.v_limit = v_lim
         self.v_sembol = v_sem.lower()
         self.v_soc = "wss://stream.binance.com:9443/ws/" + v_sembol + "@depth"
-        self.ws = websocket.WebSocketApp(self.v_soc, on_open=self.on_open, on_close=self.on_close,
-                                         on_message=self.on_message)
+        self.ws = websocket.WebSocketApp(self.v_soc, on_open=self.on_open, on_close=self.on_close,on_message=self.on_message)
         self.orderbook = {}
         self.emir_defteri = {}
         self.updates = 0
@@ -69,7 +68,7 @@ class Socketine():
 
         # check if update still in sync with orderbook
         elif data['U'] == lastUpdateId + 1:
-            # print(f'lastUpdateId {data["u"]}')
+            print(f'lastUpdateId {data["u"]}')
             self.orderbook['lastUpdateId'] = data['u']
             self.process_updates(data)
         else:
@@ -81,7 +80,7 @@ class Socketine():
                 self.manage_orderbook('bids', update)
             for update in data['a']:
                 self.manage_orderbook('asks', update)
-                # last_update['last_update'] = datetime.now()
+                last_update['last_update'] = datetime.now()
             self.v_last_update = datetime.now()
             self.v_book = self.get_ordergenelorder_book()
             print('Son güncelleme', self.v_last_update, len(self.v_book["bids"]))
@@ -102,14 +101,14 @@ class Socketine():
                     break
                 else:
                     self.orderbook[side][x] = update
-                    # print(f'Updated: {price} {qty}')
+                    print(f'Updated: {price} {qty}')
                     break
             # if the price level is not in the orderbook,
             # insert price level, filter for qty 0
             elif price > self.orderbook[side][x][0]:
                 if qty != 0:
                     self.orderbook[side].insert(x, update)
-                    # print(f'New price: {price} {qty}')
+                    print(f'New price: {price} {qty}')
                     break
                 else:
                     break
@@ -150,6 +149,7 @@ def run_frontdata(v_limit, v_sembol):
             time.sleep(2)
             t5 = threading.Thread(target=v_basclass.run_forever())
             t5.start()
+            t5.join(2)
             print('Anlık order bokdwefwegfqk ', v_basclass.get_ordergenelorder_book, datetime.now())
 
         except Exception as exp:

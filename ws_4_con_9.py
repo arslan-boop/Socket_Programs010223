@@ -96,6 +96,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             ask_vol = ask_tbl['quantity'].sum()
             bid_vol = bid_tbl['quantity'].sum()
             fulltbl = bid_tbl.append(ask_tbl)  # append the buy and sell side tables to create one cohesive table
+
             volumewhale = fulltbl['quantity'].sum()
 
             v_bidask_fark_tutar = float(bid_tbl['quantity'].sum()) - float(ask_tbl['quantity'].sum())
@@ -530,7 +531,7 @@ def islem(v_sembol_g, v_limit_g):
                 v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
             else:
                 print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'alim tarafi', v_alim_var)
-            time.sleep(2)
+            time.sleep(0.2)
             # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',         len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
             if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
                 whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price)

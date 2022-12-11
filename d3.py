@@ -3,7 +3,9 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import requests
+
 from json import loads
+from itertools import zip_longest
 import traceback
 import logging
 import threading
@@ -12,9 +14,8 @@ import json
 import pandas as pd
 import websocket
 from binance.client import Client as Client_1
-import  asyncio
+import asyncio
 import binance
-
 import sqlite3
 import time
 from datetime import datetime
@@ -46,244 +47,320 @@ genel_alimlar = []
 genel_satimlar = []
 v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
 
+# global orderbook, updates, v_last_update
+v_last_update = '2022'
+orderbook = {}
+updates = 0
+
 
 # *****************************ALIM SATIM İŞLEMLERİ*****************************************************
+def UniqueResults(dataframe):
+    tmp = [dataframe[col].unique() for col in dataframe]
+    return pd.DataFrame(zip_longest(*tmp), columns=dataframe.columns)
+
+#With New DataFrame
+def UniqueResults1(dataframe):
+    df = pd.DataFrame()
+    for col in dataframe:
+        S=pd.Series(dataframe[col].unique())
+        df[col]=S.values
+    return df
 
 def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_pri):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati, v_last_price_g
     global v_client, v_alim_timestamp, v_alim_zamani
     # v_client = Client(API_Config.API_KEY, API_Config.API_SECRET)
-
+    #depth_dict = []
     # global ask_tbl, bid_tbl
-    v_volume_fark_oran = 0.05  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_volume_fark_oran = 0.01  # İlgili bid veya ask satırının tüm tablodaki volume oranı
     v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
     v_kar_oran = 1.004
-    v_zarar_oran = 0.991
+    v_zarar_oran = 0.995
     minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
-    # print(datetime.now(), '-', 'WHALE BAŞI ', '-', str(v_son_fiyat), '-', v_symbol, '-',  str(v_limit), '-', str(v_son_fiyat), '-', str(len(v_genel_orderbook)))
-    # depth_dict = v_spot_client.depth(v_symbol, limit=v_limit)
-    # v_son_fiyat = float(v_son_fiyat)
-
     if v_alim_var == 0:
+        #depth_dict = np.asarray(v_genel_orderbook['asks'], dtype=float)[:,0]
         depth_dict = v_genel_orderbook
+        print('değer',v_genel_orderbook['asks'][0])
         try:
-            v_frame = {side: pd.DataFrame(data=depth_dict[side], columns=["price", "quantity"], dtype=float)
-                       for side in ["bids", "asks"]}
-            ask_tbl = pd.DataFrame(data=depth_dict['asks'], columns=['price', 'quantity'])
-            bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'])
+            # ob_ask = pd.DataFrame(columns=['price', 'quantity'])
+            # ob_bid = pd.DataFrame(columns=['price', 'quantity'])
+            #
+            # for i in range(len(depth_dict['bids'])):
+            #      price = depth_dict['bids'][i][0]
+            #      quantity= depth_dict['bids'][i][1]
+            #      ob_bid.loc[(i + 1) - 1] = [price, quantity]
+            #
+            # for i in range(len(depth_dict['asks'])):
+            #     price = depth_dict['asks'][i][0]
+            #     quantity = depth_dict['asks'][i][1]
+            #     ob_ask.loc[(i + 1) - 1] = [price, quantity]
+            # diziask = []
+            # print(len(depth_dict['asks']))
+            # # print(depth_dict['asks'][0])
+            # print(depth_dict['asks'])
+            # #
+            # numpy_array2 = np.array(depth_dict['asks'])
+            # print(numpy_array2.ndim) # dizinin boyutunu söyler
+            # print(numpy_array2.shape) # dizinin satır ve sütün sayısını söyler
+            # #
+            # # # 1. sütun
+            # # first_column = numpy_array[:, 0]
+            # diziask = depth_dict['asks']
+            #
+            # arr = np.array(depth_dict['asks'])
+            #dtype = int32
 
-            # print(ask_tbl.head(5))
-            # print(v_symbol, str(v_son_fiyat), datetime.now(), '******HAM HALİ****=', len(bid_tbl), 'Len Ask = ', len(ask_tbl))
-            # Fiyatları nümeric yap
-            ask_tbl['price'] = pd.to_numeric(ask_tbl['price'])
-            ask_tbl['quantity'] = pd.to_numeric(ask_tbl['quantity'])
-            bid_tbl['price'] = pd.to_numeric(bid_tbl['price'])
-            bid_tbl['quantity'] = pd.to_numeric(bid_tbl['quantity'])
+            #depth_dict = np.array(depth_dict)
+            # mean_data = np.asarray(mean_data)
+            #R = np.array(mean_data)[:,0]
+            # R = np.array(mean_data[:, 0]) bunu kullan
+            # c_price=[]
+            #
+            # c_price = depth_dict['asks'][:, 0]
+            # print(c_price)
+            print('s')
 
-            # Tabloya Hacim kolonu ekle. Hacim toplam alım tutarı aslında
-            # Bunun için öncelikle ara tablo(frame)oluşturuyoruz 3 kolonlu
-            ob_ask = pd.DataFrame(columns=['price', 'quantity', 'volume'])
-            ob_bid = pd.DataFrame(columns=['price', 'quantity', 'volume'])
-            if len(ask_tbl) < 1 or len(bid_tbl) < 1:
-                return
-            for i in range(len(bid_tbl)):
-                v_total_b = float(bid_tbl['price'][i] * bid_tbl['quantity'][i])
-                v_fiyat_b = bid_tbl['price'][i]
-                v_miktar_b = bid_tbl['quantity'][i]
-                ob_bid.loc[(i + 1) - 1] = [v_fiyat_b, v_miktar_b, v_total_b]
+            # c_price = np.asarray(depth_dict['asks'], dtype=float)[:,0]
+            # c_quantity = np.asarray(depth_dict['asks'], dtype=float)[:,1]
 
-            for i in range(len(ask_tbl)):
-                v_total_a = float(ask_tbl['price'][i] * ask_tbl['quantity'][i])
-                v_fiyat_a = ask_tbl['price'][i]
-                v_miktar_a = ask_tbl['quantity'][i]
-                ob_ask.loc[(i + 1) - 1] = [v_fiyat_a, v_miktar_a, v_total_a]
+            #c_price = np.array(depth_dict['asks'][:,0], dtype=float)
+            #c_quantity = np.array(depth_dict['asks'][:,1], dtype=float)
 
-            # Hacmide işin içine katıp tekrar baştaki tabloya atadık
-            ask_tbl = ob_ask
-            bid_tbl = ob_bid
+            # c_price = np.array(depth_dict['asks'])[:,0]
+            # c_quantity = np.array(depth_dict['asks'])[:,1]
+
+
+            #df = pd.DataFrame(data=c_price, columns=["price"], dtype=float)
+            #df = pd.DataFrame(data=type(c_price), columns=["price"], dtype=float)
+            # df = pd.DataFrame(dtype=float)
+            # #df["price"] = pd.Series(c_price)
+            # df["quantity"] = pd.Series(c_quantity)
+            # print(df)
+            # print('1.kolon')
+
+            # print('1.kolon')
+            # print(c_price[0])
+            # print('2.kolon')
+            # print(c_quantity[0])
+            # if  len(c_price) != len(c_quantity ):
+            #     print('Eşit değil',len(c_price), len(c_quantity ) )
+            # else:
+            #print('Eşit looooo', len(c_price), len(c_quantity))
+            # # 1. ve 2. sütun
+            # first_and_second_column = numpy_array[:, 0:2]
+            #
+            # d= depth_dict['asks'][:0]
+            # print('dee',d)
+            # ask_tbl = pd.DataFrame(data=d)
+            # #bid_tbl = pd.DataFrame(data=depth_dict['bids'])
             # print(ask_tbl)
-            # data from websocket are not sorted yet
-            ask_tbl = ask_tbl.sort_values(by='price', ascending=True)
-            bid_tbl = bid_tbl.sort_values(by='price', ascending=False)
+            # #print(bid_tbl)
+            #
+            # # ask_tbl = pd.DataFrame(data=depth_dict['asks'][0])
+            # # print('başson')
+            # print(ask_tbl[0],ask_tbl[1] )
+            # print('son')
+            # price = bid_tbl[0]
+            # q = bid_tbl[1]
+            # df_list.append(price)
+            # print(df_list)
+            # df_list.append(q)
+            # print(df_list)
 
-            # get first on each side
-            # first_ask = float(ask_tbl.iloc[0, 0])
-            # first_bid = float(bid_tbl.iloc[0, 0])
-            first_ask = float(ask_tbl.iloc[0, 0])
-            first_bid = float(bid_tbl.iloc[0, 0])
-            mid_price = float((first_ask + first_bid) / 2)
-            perc_above_first_ask = ((1.0 + v_oran) * mid_price)
-            perc_above_first_bid = ((1.0 - v_oran) * mid_price)
 
-            # perc_above_first_ask = ((1.0 + v_oran) * first_ask)
-            # perc_above_first_bid = ((1.0 - v_oran) * first_ask)
+            #df = pd.concat(df_list).reset_index(drop=True)
+            #print(bid_tbl[0])
+            #out = UniqueResults1(bid_tbl)
+            #print(out)
+            # print(df)
+            print('son')
 
-            # limits the size of the table so that we only look at orders 5% above and under market price
-            ask_tbl = ask_tbl[(ask_tbl['price'] <= perc_above_first_ask)]
-            bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
 
-            # changing this position after first filter makes calc faster
-            bid_tbl['volume'] = pd.to_numeric(bid_tbl['volume'])
-            ask_tbl['volume'] = pd.to_numeric(ask_tbl['volume'])
-            fulltbl = bid_tbl.append(ask_tbl)  # append the buy and sell side tables to create one cohesive table
+            #ask_tbl = pd.DataFrame(data=depth_dict['asks'], columns=['price', 'quantity'])
+            #bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'])
 
-            volumewhale = fulltbl['volume'].sum()
-            minVolume = fulltbl['volume'].sum() * minVolumePerc  # Calc minimum Volume for filteringg
+            #ask_tbl = pd.Series(data=depth_dict['asks'], index=pd.Index)
 
-            # fulltbl = fulltbl[(fulltbl['volume'] >= minVolume)]  # limit our view to only orders greater than or equal to the minVolume size
-            ask_tbl = ask_tbl[(ask_tbl['volume'] >= minVolume)]  #
-            bid_tbl = bid_tbl[(bid_tbl['volume'] >= minVolume)]  #
+            #print(bid_tbl)
 
-            v_son_fiyat = float(v_last_price_g)
+            # for i in range(len(bid_tbl)):
+            #     v_total_b = float(bid_tbl['price'][i] * bid_tbl['quantity'][i])
+            #     v_fiyat_b = bid_tbl['price'][i]
+            #     v_miktar_b = bid_tbl['quantity'][i]
+            #     ob_bid.loc[(i + 1) - 1] = [v_fiyat_b, v_miktar_b, v_total_b]
+            #
+            #price_array =
+            #dict_keys(['lastUpdateId', 'bids', 'asks'])
+            #df = pd.DataFrame(data=depth_dict['bids'], columns=["price", "quantity"], dtype=float)
 
-            # Son fiyatın üzerindeki büyük teklifleri ve aşağısındaki küçük teklifleri bırakır
-            ask_tbl = ask_tbl[(ask_tbl['price'] <= float(v_son_fiyat))]  # Son fiyatın altındaki talepler fiyatı düşürür
-            bid_tbl = bid_tbl[(bid_tbl['price'] >= float(v_son_fiyat))]  # Son fiyatın üzerindeki teklifler  fiyatı yükseltir
+            # ask_tbl = pd.DataFrame(data=depth_dict['asks'], columns=['price', 'quantity'])
+            # bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'])
+            # print(ask_tbl)
+            # print(bid_tbl)
 
-            # Tüm bu filtrelemerden sonra tabloda kayıt kaldıysa işleme devam et
-            v_bid_len = len(bid_tbl)
-            v_ask_len = len(ask_tbl)
 
-            # Teklifi karşılayan satışları çıkarıyoruz
-            v_bidask_fark_tutar = float(bid_tbl['volume'].sum()) - float(ask_tbl['volume'].sum())
-            v_vol_oran_bid = (float(bid_tbl['volume'].sum()) / float(volumewhale)) * 100
-            v_hedef_bid = float(v_son_fiyat * v_kar_oran)
-            v_vol_oran_ask = (float(ask_tbl['volume'].sum()) / float(volumewhale)) * 100
-            v_hedef_ask = float(v_son_fiyat * v_zarar_oran)
+            # for side in ["bids", "asks"]:
+            #     df = pd.DataFrame(depth_dict[side], columns=["price", "quantity"], dtype=float)
+            #     #df1 = df.apply(lambda col: pd.Series(col.unique()))
 
-            if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and v_vol_oran_bid >= v_volume_fark_oran:
-                # v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
-                # v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
-                # v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
-                # if 1 == 1:  # adx_arti == 1 and stoc_arti == 1:
-                v_1m_c = check_change_dk(v_symbol, '1m', 500)
+                #out = UniqueResults(df)
+                #df = df.fillna(0)
+                #df["side"] = side
+                #print('Side yazacak', df["side"])
+                #df_list.append(df)
+                #print('df _list yaz ', df_list)
 
-                if float(v_1m_c) > 0:
-                    print('SEMBOL', v_symbol, '***ARTMALI *** HEDEF == ', "{:.6f}".format(float(v_hedef_bid)),
-                          'Fark Tutar = ', "{:.6f}".format(float(v_bidask_fark_tutar)), 'Zaman = ', str(datetime.now())[0:19])
+            # print('df _list yaz son ')
+            # print(df_list)
+            # print('df  son ')
+            # print(df)
+            #df = pd.concat(df_list).reset_index(drop=True)
+            # print('df birleş son= ')
+            # print(df)
+            #
+            # print('son')
 
-                    v_mess = str(v_symbol) + '--' + '***ARTMALI *** HEDEF == ' + '--' + "{:.6f}".format(float(v_hedef_bid)) + \
-                             '--' + ' Zaman = ' + '--' + str(datetime.now())[0:19] + '--' + \
-                             'Son Fiyat = ' + '--' + "{:.6f}".format(float(v_son_fiyat)) + '--' + \
-                             'Fark Tutar = ' + '--' + "{:.6f}".format(float(v_bidask_fark_tutar)) + '--' + \
-                             'Teklif Toplamı = ' + '--' + "{:.6f}".format(float(bid_tbl['volume'].sum()))
+            #
+            # v_frame = {side: pd.DataFrame(data=depth_dict[side], columns=["price", "quantity"], dtype=float)
+            #            for side in ["bids", "asks"]}
+            # print(len(v_frame))
+            # print(v_frame)
 
-                    # Telegram mesajo
-                    Telebot_v1.mainma(v_mess)
-                    v_alim_fiyati = v_son_fiyat
+            # ask_tbl = pd.DataFrame(data=depth_dict['asks'], columns=['price', 'quantity'])
+            # bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'])
+            # # ask_tbl = pd.Series(data=depth_dict['asks'], columns=['price', 'quantity'])
+            # bid_tbl = pd.Series(data=depth_dict['bids'], columns=['price', 'quantity'])
+            #
+            # print(len(bid_tbl))
+            # print(len(ask_tbl))
+            # Adding list to pandas DataFrame
+            #Boş olan satırlarda hata verdiği için eklendi. Değerlerin değişmediği görüldü.09.12
+            # ask_tbl['price'] = pd.Series(ask_tbl['price'])
+            # ask_tbl['quantity'] = pd.Series(ask_tbl['quantity'])
+            # bid_tbl['price'] = pd.Series(bid_tbl['price'])
+            # bid_tbl['quantity'] = pd.Series(bid_tbl['quantity'])
+            #
+            # ask_tbl = ask_tbl.fillna(0)
+            # bid_tbl = bid_tbl.fillna(0)
 
-                    current_timestamp = round(time.time() * 1000)
-                    v_alim_timestamp = (current_timestamp + (60000)) / 1000
-                    v_alim_zamani = str(datetime.now())[0:19]
-
-                    v_hedef_bid_global = v_hedef_bid
-                    v_hedef_ask_global = v_hedef_ask
-                    v_alim_var = 1
-                    print('****************Teklifler = ********************')
-                    print(bid_tbl)
-                    Telebot_v1.genel_alimlar(v_symbol, 'A')
-
-            else:
-                print('Alım için Uygun Emir Bulunamadı.!', v_symbol, datetime.now())
         except Exception as exp:
             v_hata_mesaj = 'Hata Oluştu!!..Alım tarafı  = ' + str(exp)
+            # print(bid_tbl)
+            # print(ask_tbl)
             Telebot_v1.mainma(v_hata_mesaj)
-
+            pass
     elif v_alim_var == 1:
-        current_timestamp = round(time.time() * 1000)
-        v_satim_timestamp = current_timestamp / 1000
-
         try:
-            v_son_fiyat = float(v_last_price_g)
-            print(str(v_symbol), 'İçerde alım var.......!!', str(datetime.now())[0:19], 'Hedefi = ',
-                  str(v_hedef_bid_global), 'Son Fiyat = ', str(v_son_fiyat))
-
-            if float(v_son_fiyat) >= float(v_hedef_bid_global):
-                v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
-                v_mess1 = 'Karla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_bid_global)) + '- Sembol :' + str(
-                    v_symbol) + \
-                          '- Alım Fiyatı :' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                          '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(datetime.now())[0:19] + \
-                          'Alım Zamanı : ' + str(v_alim_zamani)
-                v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                   '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now())[0:19]
-                print(v_mess1)
-                # ******************
-                Telebot_v1.mainma(v_mess1)
-                Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-
-                v_alim_var = 0
-                Telebot_v1.genel_alimlar(v_symbol, 'S')
-            elif float(v_son_fiyat) < float(v_hedef_ask_global):
-                v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
-                v_zarprofit_oran = float(v_zarprofit_oran)
-
-                v_mess1 = 'Zararla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_ask_global)) + '- Sembol :' + str(
-                    v_symbol) + \
-                          '- Alım Fiyatı :' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                          '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-                    datetime.now())[0:19] + 'Alım Zamanı : ' + str(v_alim_zamani)
-                print(v_mess1)
-                v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                   '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())[0:19]
-
-                Telebot_v1.mainma(v_mess1)
-                Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-                v_alim_var = 0
-                Telebot_v1.genel_alimlar(v_symbol, 'S')
-            elif v_satim_timestamp >= v_alim_timestamp:
-                # 1 dk yı geçtiği için satacak
-                if float(v_son_fiyat)>= float(v_alim_fiyati) :
-                    vm_karzar = 'KARLA KAPADI - '
-                    v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
-
-                    v_mess1 = vm_karzar + '...Hedefi : ' + "{:.6f}".format(
-                        float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                              '- Alım Fiyatı :' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                              '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
-                        datetime.now())[0:19] + 'Alım Zamanı : ' + str(v_alim_zamani)
-                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                       '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now())[0:19]
-                    print(v_mess1)
-                    # ******************
-                    Telebot_v1.mainma(v_mess1)
-                    Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-                    v_alim_var = 0
-                    Telebot_v1.genel_alimlar(v_symbol, 'S')
-                elif float(v_alim_fiyati) >  float(v_son_fiyat):
-                    vm_karzar = 'ZARARLA KAPADI - '
-                    v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
-                    v_zarprofit_oran = float(v_zarprofit_oran)
-
-                    v_mess1 = vm_karzar + '..Hedefi : ' + "{:.6f}".format(
-                        float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                              '- Alım Fiyatı :' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                              '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-                        datetime.now())[0:19] + 'Alım Zamanı : ' + str(v_alim_zamani)
-                    print(v_mess1)
-                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                       '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())[0:19]
-
-                    Telebot_v1.mainma(v_mess1)
-                    Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-                    v_alim_var = 0
-                    Telebot_v1.genel_alimlar(v_symbol, 'S')
-                # ---------------------------
-            else:
-                print('İçerde alım var ama henüz satılamadı...!- ', str(datetime.now())[0:19], v_symbol, ' - Hedefi = ',
-                      str(v_hedef_bid_global), 'Son Fiyat = ', str(v_son_fiyat))
+            print('alım vqr')
 
         except Exception as exp:
             v_hata_mesaj = 'Hata Oluştu!!..Satım tarafı  = ' + str(exp)
             Telebot_v1.mainma(v_hata_mesaj)
+
+
+# ********************ORDER BOOK SOCKETİ ******************************
+
+def basla(v_lim, v_sem):
+    # print('Soketi başlattı')
+    global v_limit, v_sembol, orderbook, updates
+    try:
+        v_limit = v_lim
+        v_sembol = v_sem.lower()
+        v_soc = "wss://stream.binance.com:9443/ws/" + v_sembol + "@depth@100ms"
+        wsb = websocket.WebSocketApp(v_soc, on_open=on_open, on_close=on_close, on_message=on_message)
+        # ws.run_forever()
+        t1 = threading.Thread(target=wsb.run_forever)
+        t1.start()
+        t1.join(2)
+        orderbook = []
+        updates = 0
+        # print('çıkyo')
+    except Exception as exp:
+        v_hata_mesaj = 'Hata Oluştu!!..basla  = ' + str(exp)
+        Telebot_v1.mainma(v_hata_mesaj)
+
+
+def on_open(ws):
+    print('2.Soketi başlattı .....!!!')
+
+
+def on_close(ws):
+    print('closed connection')
+
+
+def on_message(ws, message):
+    global orderbook, v_limit, v_sembol
+    global updates, v_last_update
+
+    # print('received message')
+    data = loads(message)
+
+    if len(orderbook) == 0:
+        orderbook = get_snapshot(v_sembol, v_limit)
+
+    lastUpdateId = orderbook['lastUpdateId']
+    # print(datetime.now(), 'Anlık Data', len(data["b"]))
+    # print('İçerde Emir orderbook Bids ve Ask =', len(orderbook["bids"]), '-', len(orderbook["asks"]))
+    # drop any updates older than the snapshot
+    if updates == 0:
+        if data['U'] <= lastUpdateId + 1 and data['u'] >= lastUpdateId + 1:
+            # print(f'lastUpdateId {data["u"]}')
+            orderbook['lastUpdateId'] = data['u']
+            process_updates(data)
+        else:
+            print('discard update')
+
+    # check if update still in sync with orderbook
+    elif data['U'] == lastUpdateId + 1:
+        # print(f'lastUpdateId {data["u"]}')
+        orderbook['lastUpdateId'] = data['u']
+        process_updates(data)
+    else:
+        print('Out of sync, abort')
+
+
+def process_updates(data):
+    # with lock:
+    for update in data['b']:
+        manage_orderbook('bids', update)
+    for update in data['a']:
+        manage_orderbook('asks', update)
+        # last_update['last_update'] = datetime.now()
+    v_last_update = datetime.now()
+
+
+# Update orderbook, differentiate between remove, update and new
+def manage_orderbook(side, update):
+    # extract values
+    price, qty = update
+
+    # loop through orderbook side
+    for x in range(0, len(orderbook[side])):
+        if price == orderbook[side][x][0]:
+            # when qty is 0 remove from orderbook, else
+            # update values
+            if qty == 0:
+                del orderbook[side]
+                print(f'Removed {price} {qty}')
+                break
+            else:
+                orderbook[side][x] = update
+                # print(f'Updated: {price} {qty}')
+                break
+        # if the price level is not in the orderbook,
+        # insert price level, filter for qty 0
+        elif price > orderbook[side][x][0]:
+            if qty != 0:
+                orderbook[side].insert(x, update)
+                # print(f'New price: {price} {qty}')
+                break
+            else:
+                break
+
+
+def get_ordergenelorder_book():
+    global orderbook
+    return orderbook
 
 
 # *******************************************************Frontun soketi
@@ -335,7 +412,7 @@ def dosyalari_temizle():
 
 def dosya_aktar():
     global v_dosya_coin
-
+    # #
     DB_transactions3.USDT_Tablo_Yaz()
     DB_transactions3.File_write()
     DB_transactions3.con.commit()
@@ -351,7 +428,7 @@ def dosya_aktar():
             #
             # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
             v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-            if 1==1: #v_3m_c > 0 and v_5m_c > 0 :# and v_15m_c > 0 and v_60m_c > 0:
+            if 1 == 1:  # v_3m_c > 0 and v_5m_c > 0 :# and v_15m_c > 0 and v_60m_c > 0:
                 if i <= 9:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, datetime.now())
@@ -435,7 +512,7 @@ def run_frontdata(v_sem, v_int):
 
 
 def get_snapshot(v_sembol, v_limit):
-    #https://www.binance.com/api/v3/ticker/bookTicker?symbol=BTCUSDT
+    # https://www.binance.com/api/v3/ticker/bookTicker?symbol=BTCUSDT
     # print('Snapshot alındı', 'Sembol=', v_sembol, 'Limit=', v_limit, 'Zaman=', datetime.now())
     r = requests.get('https://www.binance.com/api/v1/depth?symbol=' + v_sembol.upper() + '&limit=' + str(v_limit))
     return loads(r.content.decode())
@@ -446,7 +523,10 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g):
     print('Başladı ', v_sembol_g, datetime.now())
     try:
         run_frontdata(v_sembol_g, v_inter_g)
-        time.sleep(1)
+        time.sleep(2)
+        basla(v_limit_g, v_sembol_g)
+        time.sleep(2)
+        # print('basson')
         islem(v_sembol_g, v_limit_g)
         # time.sleep(5)
     except Exception as exp:
@@ -455,21 +535,75 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g):
 
 
 def islem(v_sembol_g, v_limit_g):
-    global v_last_price_g, v_open_price
-    v_genel_orderbook = []
-    v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
-    time.sleep(1)
+    global v_last_price_g, v_open_price, orderbook
+    v_genel_orderbook = {}
+    cc = []
+    v_genel_orderbook = orderbook  # get_snapshot(v_sembol_g, v_limit_g)
+    #v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
+    time.sleep(10)
+    #
+    # print('ord1',orderbook)
+    # print('or2',v_genel_orderbook)
+    # print('or3', v_genel_orderbook1)
+    # print('ss')
+
     try:
         while (True):
             if v_alim_var == 0:
-                v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
+                time.sleep(0.3)
+                v_genel_orderbook = orderbook #get_ordergenelorder_book()
+                # print('1...',v_sembol_g, datetime.now())
+                # v_genel_orderbook = np.array(orderbook,dtype=float)  # get_snapshot(v_sembol_g, v_limit_g)
+                # print('ord1',orderbook)
+                #v_genel_orderbook = orderbook
+                #v_genel_orderbook["bids"]
+                #y=v_genel_orderbook.get("bids")
+                if len(v_genel_orderbook["bids"]) > 0:
+                    c_price = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 0]
+                    c_quantity = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 1]
+                    print('Bids',v_genel_orderbook)
+                else:
+                    print('YOKLAAAA')
+
+                #print('cprice', c_price[2][2])
+                #print('Bids_y', y)
+                """
+                for i in x:
+                    print(x[i])
+
+                for i, j, z in v_genel_orderbook.items():
+                    print(i, j,z)
+                """
+                #v_genel_orderbook = get_snapshot(v_sembol_g, v_limit_g)
+                # print('2...', datetime.now())
+                # time.sleep(0.1)
+                # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',
+                #       len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]),
+                #       datetime.now())
+                #print('değer', type(v_genel_orderbook)['asks'][0])
+                #
+                # for s in range(len(v_genel_orderbook)):
+                #     if v_genel_orderbook[s]["asks"]==0:
+                #         print('başardı')
+                # cc= get_ordergenelorder_book()
+                # print('değer', v_genel_orderbook)
+                # print('ddd',cc)
+                # # if len(v_genel_orderbook)>0:
+                # c_price = np.asarray(v_genel_orderbook['bids'], dtype=float)[:, 0]
+                # c_q = np.asarray(v_genel_orderbook['bids'], dtype=float)[:, 1]
+                #
+                # print('sss',c_price)
+                # print('sss', c_q)
+                #
+                if v_last_price_g != 0:
+                    print('W1...', v_sembol_g, datetime.now())
+                    #whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price)
             else:
-                print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'alim tarafi', v_alim_var)
-            time.sleep(1.33)
-            # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',         len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]), datetime.now())
-            if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
-                print('İşlenen CoinNNNNN ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'alim tarafi', v_alim_var)
-                #whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price)
+                # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'alim tarafi', v_alim_var)
+                time.sleep(3)
+                # if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
+                #      whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price)
+                # # print('W2...', v_sembol_g, datetime.now())
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)

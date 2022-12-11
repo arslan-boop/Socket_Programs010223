@@ -378,7 +378,7 @@ def run_frontdata(v_sem, v_int):
 def get_snapshot(v_sembol, v_limit):
     # print('Snapshot alındı', 'Sembol=', v_sembol, 'Limit=', v_limit, 'Zaman=', datetime.now())
     r = requests.get('https://www.binance.com/api/v1/depth?symbol=' + v_sembol.upper() + '&limit=' + str(v_limit))
-    return loads(r.content.decode())
+    return hloads(r.content.decode())
 
 
 # Her bir process için
