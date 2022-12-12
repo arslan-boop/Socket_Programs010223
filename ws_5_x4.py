@@ -170,20 +170,6 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             v_vol_oran_bid = (float(bid_tbl['quantity'].sum()) / float(volumewhale)) * 100
             v_vol_oran_ask = (float(ask_tbl['quantity'].sum()) / float(volumewhale)) * 100
 
-            # print('SEMBOL', v_symbol, '*Bulunamadı == ', "{:.6f}".format(float(v_hedef_bid)),
-            #       'Fark Tutarlar = ', "{:.1f}".format(float(v_bidask_fark_tutar)),"{:.1f}".format(float(v_bidask_fark_tutar_old)),
-            #       'Fiyat:', "{:.6f}".format(float(v_son_fiyat)),
-            #       'B_V_OS:', "{:.1f}".format(float(v_vol_oran_bid)),"{:.1f}".format(float(v_vol_oran_bid_old)),
-            #       'A_V_OS:', "{:.1f}".format(float(v_vol_oran_ask)),"{:.1f}".format(float(v_vol_oran_ask_old))
-            #       'Zaman = ', datetime.now()) #str(datetime.now())[0:19])
-            # #
-            # print('SEMBOL', v_symbol, '*OLDBulunamadı == ', "{:.6f}".format(float(v_hedef_bid)),
-            #       'Fark Tutar = ', "{:.1f}".format(float(v_bidask_fark_tutar_old)),
-            #       'Fiyat:', "{:.6f}".format(float(v_son_fiyat)),
-            #       'B_V_O:', "{:.1f}".format(float(v_vol_oran_bid_old)),
-            #       'A_V_O:', "{:.1f}".format(float(v_vol_oran_ask_old)),
-            #       'Zaman = ', datetime.now())  #str(datetime.now())[0:19])
-
             if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran*100):
 
             #if float(v_vol_oran_bid_old) >= 70:  # or float(v_bidask_fark_tutar_old*v_son_fiyat) >=10000:
@@ -203,16 +189,6 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                              'Bid_VO= ' + '--' + "{:.2f}".format(float(v_vol_oran_bid))
                     # Telegram mesajo
                     Telebot_v1.mainma(v_mess)
-                    # # *************************************************
-                    # v_mesy1 = str(v_symbol) + '--' + '*Tuttum Seni Genel - İçerde * HEDEF == ' + '--' + "{:.6f}".format(float(v_hedef_bid)) + \
-                    #          '--' + ' Zaman = ' + '--' + str(datetime.now())[0:19] + '--' + \
-                    #          'Fiyat = ' + '--' + "{:.6f}".format(float(v_son_fiyat)) + '--' + \
-                    #          'Fark Tutar = ' + '--' + "{:.1f}".format(float(v_bidask_fark_tutar_old)) + '--' + \
-                    #          'Bid Topl= ' + '--' + "{:.1f}".format(float(bid_tbl_old['volume'].sum())) + '--' + \
-                    #          'Ask Topl= ' + '--' + "{:.1f}".format(float(ask_tbl_old['volume'].sum())) + '--' + \
-                    #          'Bid_VO= ' + '--' + "{:.2f}".format(float(v_vol_oran_bid_old))
-                    # Telebot_v1.mainma(v_mesy1)
-                    # *************************************************
                     v_mee = v_symbol + '*' + 'Hedef' + '*' + "{:.6f}".format(float(v_hedef_bid)) + '*' + \
                             'Fark Tutarlar = ' + '*' + "{:.1f}".format(float(v_bidask_fark_tutar)) + '*' + \
                             "{:.1f}".format(float(v_bidask_fark_tutar_old)) + '*' + \
