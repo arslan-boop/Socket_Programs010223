@@ -27,7 +27,7 @@ def dosyadan_db():
 def kz_hesapla(): #, v
         my_query = "select SONUC, K_Z_ORAN, Tarih from KARZARAR ORDER BY Tarih "
         cursor.execute(my_query)
-        i = 5000
+        i = 50000
         #v_bakiye = []
         v_bak = 1000
         record = cursor.fetchmany(i) #.fetchall()
