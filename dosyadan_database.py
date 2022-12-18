@@ -49,9 +49,9 @@ def kz_hesapla(): #, v
         print('Sonuç = ', v_bak)
 def satirs():
     print(len(open("Sonuc.txt", "r").readlines()))
-    print(len(open("ws_4_con4.py", "r").readlines()))
+    print(len(open("OLD/ws_4_con4.py", "r").readlines()))
 
 if __name__ == '__main__':
-    #dosyadan_db()
+    dosyadan_db()
     kz_hesapla()
     #satirs()

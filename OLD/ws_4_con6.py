@@ -28,7 +28,7 @@ import concurrent.futures
 # ssl den doğacak hataları bertaraf etmek için
 requests.packages.urllib3.disable_warnings()
 
-DB_FILE = "TRADE3.DB"
+DB_FILE = "../TRADE3.DB"
 con = sqlite3.connect(DB_FILE, timeout=10)
 cursor = con.cursor()
 
@@ -48,10 +48,10 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
     # v_client = Client(API_Config.API_KEY, API_Config.API_SECRET)
 
     # global ask_tbl, bid_tbl
-    v_volume_fark_oran = 5  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_volume_fark_oran = 3  # İlgili bid veya ask satırının tüm tablodaki volume oranı
     v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
-    v_kar_oran = 1.004
-    v_zarar_oran = 0.991
+    v_kar_oran = 1.003
+    v_zarar_oran = 0.99
     minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
     # print(datetime.now(), '-', 'WHALE BAŞI ', '-', str(v_son_fiyat), '-', v_symbol, '-',  str(v_limit), '-', str(v_son_fiyat), '-', str(len(v_genel_orderbook)))
     # depth_dict = v_spot_client.depth(v_symbol, limit=v_limit)
@@ -196,11 +196,11 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                   'Son Fiyat = ', str(v_son_fiyat))
     else:
         if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and v_vol_oran_bid >= v_volume_fark_oran:
-            v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
-            v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
-            v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
+            # v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
+            # v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
+            # v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
 
-            if adx_arti == 1 and stoc_arti ==1 :
+            if 1 == 1:  # adx_arti == 1 and stoc_arti == 1:
                 print('SEMBOL', v_symbol, '***ARTMALI *** HEDEF == ', "{:.6f}".format(float(v_hedef_bid)), ' Zaman = ',
                       v_time)
                 v_mess = str(v_symbol) + '--' + '***ARTMALI *** HEDEF == ' + '--' + "{:.6f}".format(
@@ -218,7 +218,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                 print(bid_tbl)
                 Telebot_v1.genel_alimlar(v_symbol, 'A')
             else:
-                v_me = 'Alacaktı fakat stoclar engel -'+str(adx_arti)+'-'+str(stoc_arti)+str(v_time)
+                v_me = 'Alacaktı fakat stoclar engel -' + str(adx_arti) + '-' + str(stoc_arti) + str(v_time)
                 Telebot_v1.mainma(v_me)
         else:
             print('Alım için Uygun Emir Bulunamadı.!', v_symbol, datetime.now())
@@ -267,8 +267,8 @@ def socket_front(v_symbol, v_inter):
 
 
 def dosyalari_temizle():
-    open("Alinanlar.txt", 'w').close()
-    open("Satilanlar.txt", 'w').close()
+    open("../Alinanlar.txt", 'w').close()
+    open("../Satilanlar.txt", 'w').close()
 
 
 def dosya_aktar():
@@ -279,15 +279,17 @@ def dosya_aktar():
     DB_transactions3.con.commit()
 
     v_dosya_coin = []
-    with open('Sembol3.txt', 'r') as dosya:
+    with open('../Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_symbol = line
-            v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
-            v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
-            v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
-
-            if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
+            # v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
+            # v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
+            # v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
+            #
+            # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
+            v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
+            if v_3m_c > 0 and v_5m_c > 0 and v_15m_c > 0 and v_60m_c > 0:
                 if i <= 20:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i)
@@ -296,6 +298,49 @@ def dosya_aktar():
                 i += 1
     dosya.close()
     print('Dosya Tamamlandı', v_dosya_coin)
+
+
+def check_change(v_symbol, v_interval, v_limit):
+    # v_interval = '1m'
+    # global v_client, v_last_buyed_coin
+    v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
+    klines = v_client.get_klines(symbol=v_symbol, interval=v_interval, limit=v_limit)
+    close = [float(entry[4]) for entry in klines]
+    v_len = len(close)
+    v_l_c_p = close[-1]
+
+    if v_len < 2:
+        return 0, 0, 0, 0, 0
+    else:
+        v_p_c_p2 = close[-2]
+        v_1m_c = float(((v_l_c_p - v_p_c_p2) * 100) / v_p_c_p2)
+
+    if v_len < 4:
+        return v_1m_c, 0, 0, 0, 0
+    else:
+        v_p_c_p3 = close[-3]
+        v_3m_c = float(((v_l_c_p - v_p_c_p3) * 100) / v_p_c_p3)
+
+    if v_len < 6:
+        return v_1m_c, v_3m_c, 0, 0, 0
+    else:
+        v_p_c_p5 = close[-5]
+        v_5m_c = float(((v_l_c_p - v_p_c_p5) * 100) / v_p_c_p5)
+
+    if v_len < 16:
+        return v_1m_c, v_3m_c, v_5m_c, 0, 0
+    else:
+        v_p_c_p15 = close[-15]
+        v_15m_c = float(((v_l_c_p - v_p_c_p15) * 100) / v_p_c_p15)
+
+    if v_len < 61:
+        return v_1m_c, v_3m_c, v_5m_c, v_15m_c, 0
+    else:
+        v_p_c_p60 = close[-60]
+        v_60m_c = float(((v_l_c_p - v_p_c_p60) * 100) / v_p_c_p60)
+
+    return v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p
+
 
 def run_frontdata(v_sem, v_int):
     # while (True):
@@ -340,8 +385,8 @@ def islem(v_sembol_g, v_limit_g):
 
 def alinan_satilan_esitmi():
     # print(len(open("Sonuc.txt", "r").readlines()))
-    genel_satimlar = len(open("Satilanlar.txt", "r").readlines())
-    genel_alimlar = len(open("Alinanlar.txt", "r").readlines())
+    genel_satimlar = len(open("../Satilanlar.txt", "r").readlines())
+    genel_alimlar = len(open("../Alinanlar.txt", "r").readlines())
 
     if genel_satimlar == genel_alimlar:
         return 1
