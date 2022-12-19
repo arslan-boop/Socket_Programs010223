@@ -77,8 +77,8 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati, v_last_price_g, v_alim_miktar
     global v_client, v_alim_timestamp, v_alim_zamani
 
-    v_volume_fark_oran = 0.08  # İlgili bid veya ask satırının tüm tablodaki volume oranı
-    v_oran = 0.04  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
+    v_volume_fark_oran = 0.05  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
     v_kar_oran = 1.003
     v_zarar_oran = 0.995
     minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
@@ -141,8 +141,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             # v_hedef_ask = float(v_son_fiyat * v_zarar_oran)
             # Son fiyatın üzerindeki büyük teklifleri ve aşağısındaki küçük teklifleri bırakır
             ask_tbl = ask_tbl[(ask_tbl['price'] <= float(v_son_fiyat))]  # Son fiyatın altındaki talepler fiyatı düşürür
-            bid_tbl = bid_tbl[
-                (bid_tbl['price'] >= float(v_son_fiyat))]  # Son fiyatın üzerindeki teklifler  fiyatı yükseltir
+            bid_tbl = bid_tbl[(bid_tbl['price'] >= float(v_son_fiyat))]  # Son fiyatın üzerindeki teklifler  fiyatı yükseltir
             # Tüm bu filtrelemerden sonra tabloda kayıt kaldıysa işleme devam et
             v_bid_len = len(bid_tbl)
             # v_ask_len = len(ask_tbl)
@@ -151,9 +150,9 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             v_vol_oran_bid = (float(bid_tbl['quantity'].sum()) / float(volumewhale)) * 100
             v_vol_oran_ask = (float(ask_tbl['quantity'].sum()) / float(volumewhale)) * 100
 
-            if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100) \
-                    and float(ask_tbl['quantity'].sum()) <2 and v_vol_oran_ask <1 and \
-                    float(v_vol_oran_bid) <20:
+            if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100) :
+                    # and float(ask_tbl['quantity'].sum()) <2 and v_vol_oran_ask <1 and \
+                    # float(v_vol_oran_bid) <20:
                 # ************************************Alım İşlemi******************************************
                 order_buy = v_client.order_market_buy(symbol=v_symbol, quoteOrderQty=float(v_islem_tutar))
                 if order_buy['status'] == 'FILLED':
@@ -606,7 +605,7 @@ def dosya_aktar():
             v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
 
             #if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
-            if v_3m_c>0 and v_ema_arti_3m==1:
+            if 1==1: #v_3m_c>0 and v_ema_arti_3m==1:
                 if i <= 13:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, datetime.now())

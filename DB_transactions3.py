@@ -79,7 +79,7 @@ def Sel_USDT(v_name): #, v
         my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 2000000 AND PRICE_CHANGE_PERCENT >1 ORDER BY PRICE_CHANGE_PERCENT DESC "
         #my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
         cursor.execute(my_query)
-        i = 30
+        i = 40
         record = cursor.fetchmany(i) #.fetchall()
         for x in record:
             #print(x, 'kayıt= ', record[0])
