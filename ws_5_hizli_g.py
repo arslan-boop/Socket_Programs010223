@@ -179,7 +179,8 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
 
             # if v_ema_cross_up3m ==1  and v_adx_cross_up == 1:
             if float(v_1m_c) > float(v_zipla_oran) and float(v_3m_c) > float(v_zipla_oran) and\
-                    float(v_5m_c) > float(v_zipla_oran) and v_ema_arti_3m == 1 and adx_arti == 1:
+                    float(v_5m_c) > float(v_zipla_oran) and  v_15m_c > float(v_zipla_oran) and \
+                    v_60m_c > float(v_zipla_oran) and v_ema_arti_3m == 1 and adx_arti == 1:
                 # ************************************Alım İşlemi******************************************
                 # order_buy = v_client.order_market_buy(symbol=v_symbol, quoteOrderQty=float(v_islem_tutar))
                 if 1 == 1:  # order_buy['status'] == 'FILLED':

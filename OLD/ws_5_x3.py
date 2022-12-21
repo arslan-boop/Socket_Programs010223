@@ -30,7 +30,7 @@ import concurrent.futures
 # ssl den doğacak hataları bertaraf etmek için
 requests.packages.urllib3.disable_warnings()
 
-DB_FILE = "TRADE3.DB"
+DB_FILE = "../TRADE3.DB"
 con = sqlite3.connect(DB_FILE, timeout=10)
 cursor = con.cursor()
 
@@ -43,6 +43,7 @@ v_alim_timestamp = 0
 v_open_price = 0
 genel_alimlar = []
 genel_satimlar = []
+orderbook = {}
 v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
 
 # global orderbook, updates, v_last_update
@@ -59,7 +60,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
     # v_client = Client(API_Config.API_KEY, API_Config.API_SECRET)
 
     # global ask_tbl, bid_tbl
-    v_volume_fark_oran = 0.01  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_volume_fark_oran = 0.08  # İlgili bid veya ask satırının tüm tablodaki volume oranı
     v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
     v_kar_oran = 1.004
     v_zarar_oran = 0.995
@@ -73,11 +74,33 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
         try:
             #v_frame = {side: pd.DataFrame(data=depth_dict[side], columns=["price", "quantity"], dtype=float)
             #           for side in ["bids", "asks"]}
-            ask_tbl = pd.DataFrame(data=depth_dict['asks'], columns=['price', 'quantity'],dtype=float)
-            bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'],dtype=float)
-            # ask_tbl = ask_tbl.fillna(0)
-            # bid_tbl = bid_tbl.fillna(0)
+
+            bids_price = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 0]
+            bids_quantity = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 1]
+            df_bids = pd.DataFrame(dtype=float)
+            df_bids["price"] = pd.Series(bids_price)
+            df_bids["quantity"] = pd.Series(bids_quantity)
+            # print(df_bids)
+            # print('1.kolon')
+
+            asks_price = np.asarray(v_genel_orderbook["asks"], dtype=float)[:, 0]
+            asks_quantity = np.asarray(v_genel_orderbook["asks"], dtype=float)[:, 1]
+            df_asks = pd.DataFrame(dtype=float)
+            df_asks["price"] = pd.Series(asks_price)
+            df_asks["quantity"] = pd.Series(asks_quantity)
+            # print(df_asks)
+            # print('2.kolon')
+
+            bid_tbl = df_bids
+            ask_tbl =df_asks
+
+            #ask_tbl = pd.DataFrame(data=depth_dict['asks'], columns=['price', 'quantity'],dtype=float)
+            #bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'],dtype=float)
+            ask_tbl = ask_tbl.fillna(0)
+            bid_tbl = bid_tbl.fillna(0)
             #
+            # print(bid_tbl)
+            # print(ask_tbl)
 
             ask_tbl['price'] = pd.to_numeric(ask_tbl['price'])
             ask_tbl['quantity'] = pd.to_numeric(ask_tbl['quantity'])
@@ -87,6 +110,9 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             # data from websocket are not sorted yet
             ask_tbl = ask_tbl.sort_values(by='price', ascending=True)
             bid_tbl = bid_tbl.sort_values(by='price', ascending=False)
+
+            # print('bidler', bid_tbl)
+            # print('ask tablosu', ask_tbl)
 
             first_ask = float(ask_tbl.iloc[0, 0])
             first_bid = float(bid_tbl.iloc[0, 0])
@@ -98,10 +124,16 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             # limits the size of the table so that we only look at orders 5% above and under market price
             ask_tbl = ask_tbl[(ask_tbl['price'] <= perc_above_first_ask)]
             bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
+            #
+            # print(bid_tbl)
+            # print(ask_tbl)
 
             # changing this position after first filter makes calc faster
             fulltbl = bid_tbl.append(ask_tbl)  # append the buy and sell side tables to create one cohesive table
             volumewhale = fulltbl['quantity'].sum()
+
+            # print(fulltbl)
+            # print('Max Ask =', float(bid_tbl['quantity'].sum()), '-', float(ask_tbl['quantity'].sum()))
 
             v_bidask_fark_tutar_old = float(bid_tbl['quantity'].sum()) - float(ask_tbl['quantity'].sum())
             v_vol_oran_bid_old = (float(bid_tbl['quantity'].sum()) / float(volumewhale)) * 100
@@ -127,8 +159,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
 
             # Son fiyatın üzerindeki büyük teklifleri ve aşağısındaki küçük teklifleri bırakır
             ask_tbl = ask_tbl[(ask_tbl['price'] <= float(v_son_fiyat))]  # Son fiyatın altındaki talepler fiyatı düşürür
-            bid_tbl = bid_tbl[
-                (bid_tbl['price'] >= float(v_son_fiyat))]  # Son fiyatın üzerindeki teklifler  fiyatı yükseltir
+            bid_tbl = bid_tbl[(bid_tbl['price'] >= float(v_son_fiyat))]  # Son fiyatın üzerindeki teklifler  fiyatı yükseltir
 
             # Tüm bu filtrelemerden sonra tabloda kayıt kaldıysa işleme devam et
             v_bid_len = len(bid_tbl)
@@ -138,17 +169,6 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             v_bidask_fark_tutar = float(bid_tbl['quantity'].sum()) - float(ask_tbl['quantity'].sum())
             v_vol_oran_bid = (float(bid_tbl['quantity'].sum()) / float(volumewhale)) * 100
             v_vol_oran_ask = (float(ask_tbl['quantity'].sum()) / float(volumewhale)) * 100
-
-            v_mee = v_symbol + '*' + 'Hedef' + '*' + "{:.6f}".format(float(v_hedef_bid)) + '*' + \
-                    'Fark Tutarlar = ' + '*' + "{:.1f}".format(float(v_bidask_fark_tutar)) + '*' + \
-                    "{:.1f}".format(float(v_bidask_fark_tutar_old)) + '*' + \
-                    'Fiyat:' + '*' + "{:.6f}".format(float(v_son_fiyat)) + '*' + \
-                    'B_V_OS:' + '*' + "{:.1f}".format(float(v_vol_oran_bid)) + '*' + \
-                    "{:.1f}".format(float(v_vol_oran_bid_old)) + '*' + \
-                    'A_V_OS:' + '*' + "{:.1f}".format(float(v_vol_oran_ask)) + '*' + \
-                    "{:.1f}".format(float(v_vol_oran_ask_old)) + '*' + \
-                    'Zaman = ' + '*' + str(datetime.now())
-            # Telebot_v1.analiz(v_mee)
 
             # print('SEMBOL', v_symbol, '*Bulunamadı == ', "{:.6f}".format(float(v_hedef_bid)),
             #       'Fark Tutarlar = ', "{:.1f}".format(float(v_bidask_fark_tutar)),"{:.1f}".format(float(v_bidask_fark_tutar_old)),
@@ -164,15 +184,16 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             #       'A_V_O:', "{:.1f}".format(float(v_vol_oran_ask_old)),
             #       'Zaman = ', datetime.now())  #str(datetime.now())[0:19])
 
-            # if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran*100):
-            if float(v_vol_oran_bid_old) >= 80:  # or float(v_bidask_fark_tutar_old*v_son_fiyat) >=10000:
+            if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran*100):
+
+            #if float(v_vol_oran_bid_old) >= 70:  # or float(v_bidask_fark_tutar_old*v_son_fiyat) >=10000:
                 # v_1m_c = check_change_dk(v_symbol, '1m', 500)
                 if 1 == 1:  # float(v_1m_c) > 0:
-                    print('SEMBOL', v_symbol, '*PCTuttum Seni* HEDEF == ', "{:.6f}".format(float(v_hedef_bid)),
+                    print('SEMBOL', v_symbol, '*Tuttum Seni* HEDEF == ', "{:.6f}".format(float(v_hedef_bid)),
                           'Fark Tutar = ', "{:.1f}".format(float(v_bidask_fark_tutar)), 'Zaman = ',
                           str(datetime.now())[0:19])
 
-                    v_mess = str(v_symbol) + '--' + '*PC_Tuttum Seni* HEDEF == ' + '--' + "{:.6f}".format(
+                    v_mess = str(v_symbol) + '--' + '*Tuttum Seni* HEDEF == ' + '--' + "{:.6f}".format(
                         float(v_hedef_bid)) + \
                              '--' + ' Zaman = ' + '--' + str(datetime.now())[0:19] + '--' + \
                              'Fiyat = ' + '--' + "{:.6f}".format(float(v_son_fiyat)) + '--' + \
@@ -192,14 +213,27 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                     #          'Bid_VO= ' + '--' + "{:.2f}".format(float(v_vol_oran_bid_old))
                     # Telebot_v1.mainma(v_mesy1)
                     # *************************************************
+                    v_mee = v_symbol + '*' + 'Hedef' + '*' + "{:.6f}".format(float(v_hedef_bid)) + '*' + \
+                            'Fark Tutarlar = ' + '*' + "{:.1f}".format(float(v_bidask_fark_tutar)) + '*' + \
+                            "{:.1f}".format(float(v_bidask_fark_tutar_old)) + '*' + \
+                            'Fiyat:' + '*' + "{:.6f}".format(float(v_son_fiyat)) + '*' + \
+                            'B_V_OS:' + '*' + "{:.1f}".format(float(v_vol_oran_bid)) + '*' + \
+                            "{:.1f}".format(float(v_vol_oran_bid_old)) + '*' + \
+                            'A_V_OS:' + '*' + "{:.1f}".format(float(v_vol_oran_ask)) + '*' + \
+                            "{:.1f}".format(float(v_vol_oran_ask_old)) + '*' + \
+                            'Zaman = ' + '*' + str(datetime.now())
+                    Telebot_v1.analiz(v_mee, v_symbol)
+
                     v_alim_fiyati = v_son_fiyat
                     current_timestamp = round(time.time() * 1000)
-                    v_alim_timestamp = (current_timestamp + (60000)) / 1000
+                    v_alim_timestamp = (current_timestamp + (30000)) / 1000
                     v_alim_zamani = str(datetime.now())[0:19]
 
                     v_hedef_bid_global = v_hedef_bid
                     v_hedef_ask_global = v_hedef_ask
                     v_alim_var = 1
+
+
                     print('****************Teklifler = ********************')
                     print(bid_tbl)
                     Telebot_v1.genel_alimlar(v_symbol, 'A')
@@ -207,8 +241,9 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                 print('Alım için Uygun Emir Bulunamadı.!', v_symbol, datetime.now())
 
         except Exception as exp:
-            v_hata_mesaj = 'Hata Oluştu!!..Alım tarafı  = ' + str(exp)
+            v_hata_mesaj = 'Hata Oluştu!!..Alım tarafı  = ' + str(exp)+str(v_symbol)
             Telebot_v1.mainma(v_hata_mesaj)
+            print('hata oldu')
 
     elif v_alim_var == 1:
         current_timestamp = round(time.time() * 1000)
@@ -221,16 +256,12 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
 
             if float(v_son_fiyat) >= float(v_hedef_bid_global):
                 v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
-                v_mess1 = 'PC_Karla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_bid_global)) + '- Sembol :' + str(
-                    v_symbol) + \
-                          '- Alım Fiyatı :' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                          '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(datetime.now())[
-                                                                                                    0:19] + \
+                v_mess1 = 'Karla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
+                          '- Alım Fiyatı :' + "{:.6f}".format(float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
+                          '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(datetime.now())+ \
                           'Alım Zamanı : ' + str(v_alim_zamani)
-                v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                   '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now())[0:19]
+                v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
+                                   '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now())  # + str(datetime.now())[0:19]
                 print(v_mess1)
                 # ******************
                 Telebot_v1.mainma(v_mess1)
@@ -238,67 +269,58 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
 
                 v_alim_var = 0
                 Telebot_v1.genel_alimlar(v_symbol, 'S')
+                Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
+
             elif float(v_son_fiyat) < float(v_hedef_ask_global):
                 v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
                 v_zarprofit_oran = float(v_zarprofit_oran)
 
-                v_mess1 = 'PC_Zararla Sattı..Hedefi : ' + "{:.6f}".format(
-                    float(v_hedef_ask_global)) + '- Sembol :' + str(
-                    v_symbol) + \
-                          '- Alım Fiyatı :' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                          '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-                    datetime.now())[0:19] + 'Alım Zamanı : ' + str(v_alim_zamani)
+                v_mess1 = 'Zararla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_ask_global)) + '- Sembol :' + str(v_symbol) + \
+                          '- Alım Fiyatı :' + "{:.6f}".format(float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
+                          '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
                 print(v_mess1)
-                v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                   '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())[0:19]
-
+                v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
+                                   '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())
                 Telebot_v1.mainma(v_mess1)
                 Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
                 v_alim_var = 0
                 Telebot_v1.genel_alimlar(v_symbol, 'S')
+                Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
             elif v_satim_timestamp >= v_alim_timestamp:
                 # 1 dk yı geçtiği için satacak
                 if float(v_son_fiyat) > float(v_alim_fiyati):
-                    vm_karzar = 'PC_KARLA KAPADI - '
+                    vm_karzar = 'KARLA KAPADI - '
                     v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
 
-                    v_mess1 = vm_karzar + '...Hedefi : ' + "{:.6f}".format(
-                        float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                              '- Alım Fiyatı :' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                              '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
-                        datetime.now())[0:19] + 'Alım Zamanı : ' + str(v_alim_zamani)
-                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                       '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now())[0:19]
+                    v_mess1 = vm_karzar + '...Hedefi : ' + "{:.6f}".format(float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
+                              '- Alım Fiyatı :' + "{:.6f}".format(float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
+                              '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
+                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
+                                       '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now())
                     print(v_mess1)
                     # ******************
                     Telebot_v1.mainma(v_mess1)
                     Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
                     v_alim_var = 0
                     Telebot_v1.genel_alimlar(v_symbol, 'S')
+                    Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
                 elif float(v_alim_fiyati) >= float(v_son_fiyat):
-                    vm_karzar = 'PC_ZARARLA KAPADI - '
+                    vm_karzar = 'ZARARLA KAPADI - '
                     v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
                     v_zarprofit_oran = float(v_zarprofit_oran)
 
-                    v_mess1 = vm_karzar + '..Hedefi : ' + "{:.6f}".format(
-                        float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                              '- Alım Fiyatı :' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                              '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-                        datetime.now())[0:19] + 'Alım Zamanı : ' + str(v_alim_zamani)
+                    v_mess1 = vm_karzar + '..Hedefi : ' + "{:.6f}".format(float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
+                              '- Alım Fiyatı :' + "{:.6f}".format(float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
+                              '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
                     print(v_mess1)
-                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                       '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())[0:19]
+                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
+                                       '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())
 
                     Telebot_v1.mainma(v_mess1)
                     Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
                     v_alim_var = 0
                     Telebot_v1.genel_alimlar(v_symbol, 'S')
+                    Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
                 # ---------------------------
             else:
                 print('İçerde alım var ama henüz satılamadı...!- ', str(datetime.now())[0:19], v_symbol, ' - Hedefi = ',
@@ -323,7 +345,7 @@ def basla(v_lim, v_sem):
         t1 = threading.Thread(target=wsb.run_forever)
         t1.start()
         t1.join(2)
-        orderbook = []
+        orderbook = {}
         updates = 0
         # print('çıkyo')
     except Exception as exp:
@@ -457,8 +479,8 @@ def socket_front(v_symbol, v_inter):
 
 
 def dosyalari_temizle():
-    open("Alinanlar.txt", 'w').close()
-    open("Satilanlar.txt", 'w').close()
+    open("../Alinanlar.txt", 'w').close()
+    open("../Satilanlar.txt", 'w').close()
 
 
 def dosya_aktar():
@@ -469,7 +491,7 @@ def dosya_aktar():
     DB_transactions3.con.commit()
 
     v_dosya_coin = []
-    with open('Sembol3.txt', 'r') as dosya:
+    with open('../Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_symbol = line
@@ -479,8 +501,8 @@ def dosya_aktar():
             #
             # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
             v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-            if 1 == 1:  # v_3m_c > 0 and v_5m_c > 0 :# and v_15m_c > 0 and v_60m_c > 0:
-                if i <= 9:
+            if 1==1 : #v_3m_c > 0 :# and v_15m_c > 0 and v_60m_c > 0:
+                if i <= 13:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, datetime.now())
                 else:
@@ -587,7 +609,7 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g):
 
 def islem(v_sembol_g, v_limit_g):
     global v_last_price_g, v_open_price, orderbook
-    v_genel_orderbook = []
+    v_genel_orderbook = {}
     v_genel_orderbook = orderbook #get_snapshot(v_sembol_g, v_limit_g)
     time.sleep(10)
     try:
@@ -596,14 +618,14 @@ def islem(v_sembol_g, v_limit_g):
                 # print('1...',v_sembol_g, datetime.now())
                 #v_genel_orderbook = orderbook  # get_snapshot(v_sembol_g, v_limit_g)
                 v_genel_orderbook = orderbook #get_snapshot(v_sembol_g, v_limit_g)
-                # print('2...', datetime.now())
+                #print('2...', len(v_genel_orderbook["bids"]),len(v_genel_orderbook["asks"]),datetime.now())
                 time.sleep(0.1)
-                if  v_last_price_g != 0 and  len(v_genel_orderbook["bids"]) > 0:
+                if  v_last_price_g != 0 and  len(v_genel_orderbook["bids"]) and  len(v_genel_orderbook["asks"]) :
                     print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',
                           len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]),
                           datetime.now())
                     # if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0:
-                    print('W1...', v_sembol_g, datetime.now())
+                    #print('W1...', v_sembol_g, datetime.now())
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price)
             else:
                 # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'alim tarafi', v_alim_var)
@@ -611,14 +633,14 @@ def islem(v_sembol_g, v_limit_g):
                 whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price)
                 # print('W2...', v_sembol_g, datetime.now())
     except Exception as exp:
-        v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + str(datetime.now())
+        v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + str(v_sembol_g)+ str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
 
 
 def alinan_satilan_esitmi():
     # print(len(open("Sonuc.txt", "r").readlines()))
-    genel_satimlar = len(open("Satilanlar.txt", "r").readlines())
-    genel_alimlar = len(open("Alinanlar.txt", "r").readlines())
+    genel_satimlar = len(open("../Satilanlar.txt", "r").readlines())
+    genel_alimlar = len(open("../Alinanlar.txt", "r").readlines())
 
     if genel_satimlar == genel_alimlar:
         return 1

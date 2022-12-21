@@ -24,6 +24,23 @@ def dosyadan_db():
     dosya.close()
     print('Dosya Tamamlandı')
 
+def analiz(v_dosya):
+    with open(v_dosya, 'r') as dosya:
+        i = 0
+        for line in dosya.read().splitlines():
+            aciklama = line
+            print('Dosya satırı..: ', line, i)
+            i += 1
+            s = aciklama.split("*")
+            print(s)
+            print(s[0])
+            my_data = (str(s[0]), float(s[2]),float(s[4]),float(s[6]),float(s[8]),float(s[9]),float(s[11]),float(s[12]),str(s[14]) )
+            my_query = "INSERT INTO ANALIZ values(?,?,?,?,?,?,?,?,?)"
+            cursor.execute(my_query, my_data)
+            con.commit()
+    dosya.close()
+    print('Dosya Tamamlandı')
+
 def kz_hesapla(): #, v
         my_query = "select SONUC, K_Z_ORAN, Tarih from KARZARAR ORDER BY Tarih "
         cursor.execute(my_query)
@@ -52,6 +69,8 @@ def satirs():
     print(len(open("OLD/ws_4_con4.py", "r").readlines()))
 
 if __name__ == '__main__':
-    dosyadan_db()
-    kz_hesapla()
+    v_dosya = "OLD/2022-12-20MAGICUSDT.txt"
+    analiz(v_dosya)
+    #dosyadan_db()
+    #kz_hesapla()
     #satirs()
