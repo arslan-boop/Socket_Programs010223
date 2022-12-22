@@ -267,7 +267,7 @@ def main_log_karar(v_symbol, v_bidask_fark_tutar, v_bidask_fark_tutar_old, v_son
 
         if float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100) and \
                 float(v_vol_oran_bid) > float(v_vol_oran_ask) and \
-                v_bov_arti == 1 and v_bov_arti_t == 1 : #and v_zipla == 1:
+                v_bov_arti == 1 and v_bov_arti_t == 1 and v_zipla == 1:
             v_al_sat = 1
         else:
             v_al_sat = 0
@@ -777,7 +777,7 @@ def dosya_aktar():
 
             # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
             if 1 == 1:  # v_3m_c>0 and v_ema_arti_3m==1:
-                if i <= 9:
+                if i <= 15:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, datetime.now())
                 else:
