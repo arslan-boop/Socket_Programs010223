@@ -166,11 +166,11 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             v_vol_oran_ask = (float(ask_tbl['quantity'].sum()) / float(volumewhale)) * 100
 
             #v_ema_cross_up3m, v_ema_cross_down3m = check_exist_ema(v_symbol, '1m', 500, v_client)
-            check_exist_ema(v_symbol, '1m', 500, v_client)
+            v_ema_cross_up3m, ema_artik,v_adx_cross_up, v_adx_arti= check_exist_ema(v_symbol, '3m', 500, v_client)
             # if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100) \
             #         and float(ask_tbl['quantity'].sum()) < 2 and v_vol_oran_ask < 1 and \
             #         float(v_vol_oran_bid) < 20:
-            if v_ema_cross_up3m ==1  and v_adx_cross_up == 1:
+            if v_ema_cross_up3m ==1  and v_adx_arti ==1 : #v_adx_cross_up == 1:
                 # ************************************Alım İşlemi******************************************
                 # order_buy = v_client.order_market_buy(symbol=v_symbol, quoteOrderQty=float(v_islem_tutar))
                 if 1 == 1:  # order_buy['status'] == 'FILLED':
@@ -638,7 +638,7 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar):
 
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price,
                                      v_islem_tutar)
-                    time.sleep(6.66)
+                    time.sleep(9.66)
             else:
                 if v_alim_var == 0:
                     v_genel_orderbook = orderbook  # get_snapshot(v_sembol_g, v_limit_g)
@@ -649,12 +649,12 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar):
                               datetime.now())
                         whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price,
                                          v_islem_tutar)
-                        time.sleep(6.66)
+                        time.sleep(9.66)
                 else:
 
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price,
                                      v_islem_tutar)
-                    time.sleep(6.66)
+                    time.sleep(9.66)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + str(v_sembol_g) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
@@ -908,6 +908,7 @@ def check_exist_ema(v_symbol, v_interval, v_limit, v_cli):
         #v_adx_cross_up = previous_plus_di < previous_minus_di and last_minus_di < last_plus_di
         if previous_plus_di < previous_minus_di and last_minus_di < last_plus_di :
            v_adx_cross_up = 1
+
            if v_ema_cross_up3m == 1:
                v_hata_mesaj = 'EMA-UP Last-Prev=' + '-' + str(v_symbol) + '-' + str(last_ema5k) + '-' + str(last_ema20k) + '-' + \
                                    str(previous_ema20k)+'-'+str(previous_ema5k)+'-'+ str(datetime.now())
@@ -919,8 +920,7 @@ def check_exist_ema(v_symbol, v_interval, v_limit, v_cli):
             v_adx_arti = 0
         adx_cross_down = previous_plus_di > previous_minus_di and last_minus_di > last_plus_di
 
-
-        #return ema_cross_upk, ema_cross_downk
+    return v_ema_cross_up3m, ema_artik,v_adx_cross_up, v_adx_arti
 
 def check_exist_ema_sat(v_symbol, v_interval, v_limit, v_cli):
     global v_ema_cross_up3m_s, v_ema_cross_down3m_s,v_ema_cross_up3m_on_s, v_ema_cross_down3m_on_s
