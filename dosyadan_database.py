@@ -69,7 +69,7 @@ def satirs():
     print(len(open("OLD/ws_4_con4.py", "r").readlines()))
 
 if __name__ == '__main__':
-    v_dosya = "OLD/2022-12-22HFTUSDT.txt"
+    v_dosya = "OLD/CRV.txt"
     analiz(v_dosya)
     #dosyadan_db()
     #kz_hesapla()

@@ -141,12 +141,12 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             if v_karar == 1:
                 if v_test_prod == 'P':
                     v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, \
-                    v_alim_miktar, v_alim_fiyati = buy_coin(v_symbol, v_islem_tutar, v_bidask_fark_tutar, bid_tbl,
+                    v_alim_miktar, v_alim_fiyati ,v_alim_zamani = buy_coin(v_symbol, v_islem_tutar, v_bidask_fark_tutar, bid_tbl,
                                                             ask_tbl, v_vol_oran_bid, v_vol_oran_ask,
                                                             v_kar_oran, v_zarar_oran)
                 else:
                     v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, \
-                    v_alim_miktar, v_alim_fiyati = buy_coin_test(v_symbol, v_islem_tutar, v_bidask_fark_tutar, bid_tbl,
+                    v_alim_miktar, v_alim_fiyati,v_alim_zamani = buy_coin_test(v_symbol, v_islem_tutar, v_bidask_fark_tutar, bid_tbl,
                                                                  ask_tbl, v_vol_oran_bid, v_vol_oran_ask,
                                                                  v_kar_oran, v_zarar_oran,v_zip)
 
@@ -171,20 +171,20 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
 
             if float(v_last_price_g) > float(v_hedef_bid_global):
                 if v_test_prod == 'P':
-                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1)
+                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1,v_alim_zamani)
                 else:
-                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1)
+                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1,v_alim_zamani)
                 v_alim_var == 0
             elif float(v_last_price_g) < float(v_hedef_ask_global):
                 if v_test_prod == 'P':
-                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 2)
+                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 2,v_alim_zamani)
                 else:
-                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 2)
+                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 2,v_alim_zamani)
             elif v_satim_timestamp >= v_alim_timestamp:
                 if v_test_prod == 'P':
-                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 3)
+                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 3,v_alim_zamani)
                 else:
-                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 3)
+                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 3,v_alim_zamani)
                 v_alim_var == 0
             else:
                 print('İçerde alım var ama henüz satılamadı...!- ', str(datetime.now())[0:19], v_symbol, ' - Hedefi = ',
@@ -225,26 +225,37 @@ def main_log_karar(v_symbol, v_bidask_fark_tutar, v_bidask_fark_tutar_old, v_son
         v_fark_tutar_bov_g.append(float(sum(v_fark_tutar_bov) / len(v_fark_tutar_bov)))
 
         if len(v_dizi_bov_g) > 1:
+            # Girerken fiyatı da kontrol et..Fiyatın düştüğü yerde girme
+            v_last_fiyat = float(v_dizi_fiyat_g[-1])
+            v_prev_fiyat = float(v_dizi_fiyat_g[-2])
+            if v_last_fiyat >= v_prev_fiyat :
+                v_fiyat_ok = 1
+            else:
+                v_fiyat_ok = 0
+            #------------------------------------------------------------
+            # Bid oranlarında bir anormallik  ziplama var mı ?
             v_last_b = float(v_dizi_bov_g[-1])
             v_prev_b = float(v_dizi_bov_g[-2])
             v_bov_oran = float(v_last_b - v_prev_b)
-
             v_last_t = float(v_dizi_bov_top_g[-1])
             v_prev_t = float(v_dizi_bov_top_g[-2])
             v_bov_oran_t = float(v_last_t - v_prev_t)
 
-            if v_prev_b < 0.15 and v_last_b >= 2:
+            if v_prev_b <= 0.1 and v_last_b >= 1:
                 v_zipla = 1
-            elif v_prev_b > 0.15 and v_prev_b < 1 and v_last_b >= 3:
+            elif v_prev_b > 0.15 and v_prev_b < 0.30 and v_last_b >= 2 and v_last_b <=3:
                 v_zipla = 1
-            elif v_prev_b > 1 and float(v_last_b / v_prev_b) >= 3:
+            elif v_prev_b > 0.5 and float(v_last_b / v_prev_b) > 3:
                 v_zipla = 1
             else:
                 v_zipla = 0
+            #--------------------------------------------------------------
+
         else:
             v_bov_oran = 0
             v_bov_oran_t = 0
 
+        # BOV oranlarında ki ilerlemenin durumu. Kullanmak istersek
         if v_bov_oran > 0:
             print('BOV artıyor...')
             v_bov_arti = 1
@@ -264,10 +275,11 @@ def main_log_karar(v_symbol, v_bidask_fark_tutar, v_bidask_fark_tutar_old, v_son
         else:
             print('BOV_T sabit...')
             v_bov_arti_t = 3
+        #----------------------------------------------------------------
 
         if float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100) and \
                 float(v_vol_oran_bid) > float(v_vol_oran_ask) and \
-                v_bov_arti == 1 and v_bov_arti_t == 1 and v_zipla == 1:
+                v_bov_arti == 1 and v_bov_arti_t == 1 and v_zipla == 1 and v_fiyat_ok==1:
             v_al_sat = 1
         else:
             v_al_sat = 0
@@ -393,7 +405,7 @@ def test_log(v_genel_orderbook, v_symbol):
 
 
 # ****************************SATIM********************************
-def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip):
+def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip,v_alim_zamani):
     global v_alim_var
     try:
         order_sell = v_client.order_market_sell(symbol=v_symbol, quantity=float(v_alim_miktar))
@@ -465,8 +477,8 @@ def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip):
 
 
 # ***************************TEST SATIM*************************
-def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip):
-    global v_alim_var, v_alim_zamani
+def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip,v_alim_zamani):
+    global v_alim_var
 
     try:
         v_son_fiyat = float(v_last_price_g)
@@ -572,7 +584,7 @@ def buy_coin(v_symbol, v_islem_tutar, v_bidask_fark_tutar, bid_tbl, ask_tbl, v_v
         v_alim_miktar = v_client.get_asset_balance(asset=v_sembolmik).get('free')
         v_alim_miktar = get_round_step_quantity(v_symbol, float(v_alim_miktar))
 
-        return v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, v_alim_miktar, v_alim_fiyati
+        return v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, v_alim_miktar, v_alim_fiyati,v_alim_zamani
     except Exception as exp:
         v_hata_mesaj = 'Satarken  Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
     Telebot_v1.mainma(v_hata_mesaj)
@@ -609,7 +621,7 @@ def buy_coin_test(v_symbol, v_islem_tutar, v_bidask_fark_tutar, bid_tbl, ask_tbl
         Telebot_v1.mainma(v_mess)
         Telebot_v1.genel_alimlar(v_symbol, 'A')
 
-        return v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, v_alim_miktar, v_alim_fiyati
+        return v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, v_alim_miktar, v_alim_fiyati,v_alim_zamani
     except Exception as exp:
         v_hata_mesaj = 'Satarken  Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
@@ -777,7 +789,7 @@ def dosya_aktar():
 
             # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
             if 1 == 1:  # v_3m_c>0 and v_ema_arti_3m==1:
-                if i <= 15:
+                if i <= 17:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, datetime.now())
                 else:
@@ -1102,7 +1114,7 @@ def parametre_ata():
     v_test_prod = 'T'
 
     if v_mod == 'S':
-        v_volume_fark_oran = 0.05  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+        v_volume_fark_oran = 0.02  # İlgili bid veya ask satırının tüm tablodaki volume oranı
         v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
         v_kar_oran = 1.004
         v_zarar_oran = 0.995
@@ -1155,7 +1167,7 @@ if __name__ == '__main__':
                                range(len(v_dosya_coin))]
                     # print('Başla.', results)
                     while True:
-                        time.sleep(300)
+                        time.sleep(900)
                         v_esit = alinan_satilan_esitmi()
                         # v_esit =0
                         if v_esit == 1:
