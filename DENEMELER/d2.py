@@ -55,58 +55,15 @@ def getLotSize(self):
     lotSize = float(info['filters'][2]['minQty'])
     return lotSize
 
-
-# get ceiling value and correct format for a lot size
-def getCeilingVal(self):
-    pairData = self.apiCall(lambda: self.client.get_symbol_ticker(symbol=self.pair))
-    pairPrice = pairData["price"]
-    ceilingVal = float(self.dInv) / float(pairPrice)
-
-    aLotSize = self.getLotSize()
-    rounded_amount = round_step_size(ceilingVal, aLotSize)
-    return rounded_amount
-
-
-def getPriceLotFormat(self, priceOrg, quantityOrg, car=None):
-    price = float(priceOrg)
-    quantity = float(quantityOrg)
-    response = self.get_symbol_info(car.pair)  # self is client btw
-    priceFilterFloat = format(float(response["filters"][0]["tickSize"]), '.20f')
-    lotSizeFloat = format(float(response["filters"][2]["stepSize"]), '.20f')
-    # PriceFilter
-    numberAfterDot = str(priceFilterFloat.split(".")[1])
-    indexOfOne = numberAfterDot.find("1")
-    if indexOfOne == -1:
-        price = int(price)
-    else:
-        price = round(float(price), int(indexOfOne - 1))
-    # LotSize
-    numberAfterDotLot = str(lotSizeFloat.split(".")[1])
-    indexOfOneLot = numberAfterDotLot.find("1")
-    if indexOfOneLot == -1:
-        quantity = int(quantity)
-    else:
-        quantity = round(float(quantity), int(indexOfOneLot))
-    print(f"""
-    ##### SELL #####
-    Pair : {str(car.pair)}
-    Cash : {str(car.price)}
-    Quantity : {str(car.quantity)}
-    Price : {str(car.price)}
-        """)
-
-
 def round_step_size(quantity: Union[float, Decimal], step_size: Union[float, Decimal]) -> float:
     if step_size == 1.0:
         return math.floor(quantity)
     elif step_size < 1.0:
         return Decimal(f'{quantity}').quantize(Decimal(f'{step_size}'), rounding=ROUND_DOWN)
 
-
 def floor_step_size(quantity):
     step_size_dec = Decimal(str(stepSize))
     return float(int(Decimal(str(quantity)) / step_size_dec) * step_size_dec)
-
 
 def get_round_step_quantity(v_symbol, qty):
     info = v_client.get_symbol_info(v_symbol)
@@ -142,7 +99,7 @@ if __name__ == '__main__':
 
     try:
         v_symbol = 'BEAMUSDT'
-        # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+        usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
         usdtBalance = get_balance('USDT')
         print('Bakiye = ', usdtBalance)
         islem_tutar = float(usdtBalance) * 0.4

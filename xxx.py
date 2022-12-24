@@ -1,100 +1,149 @@
-current_timestamp = round(time.time() * 1000)
-v_satim_timestamp = current_timestamp / 1000
+# from binance.spot import Spot as Client
+import math
+from decimal import Decimal as D, ROUND_DOWN, ROUND_UP
+import decimal
+import pandas as pd
+import websocket
+from binance.client import Client as Client_1, AsyncClient
+import asyncio
+from binance.exceptions import BinanceAPIException
+import sqlite3
+import time
+from datetime import datetime
+from decimal import Decimal, ROUND_DOWN
+import math
+from typing import Union
+from binance.helpers import round_step_size
+import API_Config
+import json
+import Telebot_v1
+from binance import ThreadedWebsocketManager
 
-try:
-    v_son_fiyat = float(v_last_price_g)
-    print(str(v_symbol), 'İçerde alım var.......!!', str(datetime.now())[0:19], 'Hedefi = ',
-          str(v_hedef_bid_global), 'Son Fiyat = ', str(v_son_fiyat))
+api_key = '4HnpGRb66wIgg12J81YWcx2arRb9MzzeAOLmmLnYOnwtMCFjDMUTE1b3hafcG5gt'
+api_secret = 'Iu586P4BP1EBJYeRb9g3tjdJSpLYlNRclY8OfjCSRpoqZE25OuIUfy3WUyFWtOJ4'
+v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
 
-    if float(v_son_fiyat) >= float(v_hedef_bid_global):
-        v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
-        v_mess1 = 'Karla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_bid_global)) + '- Sembol :' + str(
-            v_symbol) + \
-                  '- Alım Fiyatı :' + "{:.6f}".format(
-            float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                  '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
-            datetime.now()) + \
-                  'Alım Zamanı : ' + str(v_alim_zamani)
-        v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-            float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                           '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(
-            datetime.now())  # + str(datetime.now())[0:19]
-        print(v_mess1)
-        # ******************
-        Telebot_v1.mainma(v_mess1)
-        Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
+minQty = 0
+maxQty = 0
+stepSize = 0
+closes = []
 
-        v_alim_var = 0
-        Telebot_v1.genel_alimlar(v_symbol, 'S')
-        # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
+def floor_step_size(quantity):
+    step_size_dec = Decimal(str(stepSize))
+    return float(int(Decimal(str(quantity)) / step_size_dec) * step_size_dec)
 
-    elif float(v_son_fiyat) < float(v_hedef_ask_global):
-        v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
-        v_zarprofit_oran = float(v_zarprofit_oran)
 
-        v_mess1 = 'Zararla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_ask_global)) + '- Sembol :' + str(
-            v_symbol) + \
-                  '- Alım Fiyatı :' + "{:.6f}".format(
-            float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                  '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-            datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
-        print(v_mess1)
-        v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-            float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                           '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())
-        Telebot_v1.mainma(v_mess1)
-        Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-        v_alim_var = 0
-        Telebot_v1.genel_alimlar(v_symbol, 'S')
-        # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
-    elif v_satim_timestamp >= v_alim_timestamp:
-        # 1 dk yı geçtiği için satacak
-        if float(v_son_fiyat) > float(v_alim_fiyati):
-            vm_karzar = 'KARLA KAPADI - '
-            v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
+def get_round_step_quantity(v_symbol, qty):
+    info = v_client.get_symbol_info(v_symbol)
+    for x in info["filters"]:
+        if x["filterType"] == "LOT_SIZE":
+            minQty = float(x["minQty"])
+            maxQty = float(x["maxQty"])
+            stepSize = x["stepSize"]
+    if qty < minQty:
+        qty = minQty
+    return floor_step_size(qty)
 
-            v_mess1 = vm_karzar + '...Hedefi : ' + "{:.6f}".format(
-                float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                      '- Alım Fiyatı :' + "{:.6f}".format(
-                float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                      '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
-                datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
-            v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-                float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                               '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now())
-            print(v_mess1)
-            # ******************
-            Telebot_v1.mainma(v_mess1)
-            Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-            v_alim_var = 0
-            Telebot_v1.genel_alimlar(v_symbol, 'S')
-            # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
-        elif float(v_alim_fiyati) >= float(v_son_fiyat):
-            vm_karzar = 'ZARARLA KAPADI - '
-            v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
-            v_zarprofit_oran = float(v_zarprofit_oran)
 
-            v_mess1 = vm_karzar + '..Hedefi : ' + "{:.6f}".format(
-                float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                      '- Alım Fiyatı :' + "{:.6f}".format(
-                float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                      '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-                datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
-            print(v_mess1)
-            v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-                float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                               '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now())
+def get_quantity(asset):
+    balance = get_balance(asset=asset)
+    balance = float(balance) * 0.4
+    quantity = get_round_step_quantity(float(balance))
+    return quantity
 
-            Telebot_v1.mainma(v_mess1)
-            Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-            v_alim_var = 0
-            Telebot_v1.genel_alimlar(v_symbol, 'S')
-            # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
-        # ---------------------------
-    else:
-        print('İçerde alım var ama henüz satılamadı...!- ', str(datetime.now())[0:19], v_symbol, ' - Hedefi = ',
-              str(v_hedef_bid_global), 'Son Fiyat = ', str(v_son_fiyat))
 
-except Exception as exp:
-    v_hata_mesaj = 'Hata Oluştu!!..Satım tarafı  = ' + str(exp)
-    Telebot_v1.mainma(v_hata_mesaj)
+def get_balance(asset) -> str:
+    balance = v_client.get_asset_balance(asset=asset)
+    return balance['free']
+
+
+def buy(v_symbol, v_quantity, v_asset):
+    v_client.order_market_buy(symbol=v_symbol, quoteOrderQty=get_quantity(v_asset))
+    # v_client.order_market_buy(symbol=v_symbol, quoteOrderQty=get_quantity(Config.QUOTE_ASSET))
+
+
+def sell(v_symbol, v_asset):
+    v_client.order_market_sell(symbol=v_symbol, quantity=get_quantity(v_asset))
+
+def handle_socket_message(msg):
+        print(f"message type: {msg['e']}")
+        print(msg)
+def get_first_set_of_closes(v_symbol):
+        for kline in v_client.get_historical_klines(v_symbol, v_client.KLINE_INTERVAL_1MINUTE, "1 hour ago UTC"):
+            closes.append(float(kline[4]))
+
+def mainx():
+    try:
+        symbol = 'BNBBTC'
+        twm = ThreadedWebsocketManager(api_key=api_key, api_secret=api_secret)
+        # start is required to initialise its internal loop
+        get_first_set_of_closes(symbol)
+        twm.start()
+        twm.start_kline_socket(callback=handle_socket_message, symbol=symbol)
+        twm.join()
+    except Exception as exp:
+        v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + str(datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj)
+    #
+    # # multiple sockets can be started
+    # twm.start_depth_socket(callback=handle_socket_message, symbol=symbol)
+    #
+    # # or a multiplex socket can be started like this
+    # # see Binance docs for stream names
+    # streams = ['bnbbtc@miniTicker', 'bnbbtc@bookTicker']
+    # twm.start_multiplex_socket(callback=handle_socket_message, streams=streams)
+    #twm.join(2)
+
+    #Stop Individual Stream
+    # depth_stream_name = twm.start_depth_socket(callback=handle_socket_message, symbol=symbol)
+    # # some time later
+    # twm.stop_socket(depth_stream_name)
+
+    #Stop All Streams
+    #twm.stop()
+
+if __name__ == '__main__':
+    try:
+        #mainx()
+        # get latest price from Binance API
+        btc_price = v_client.get_symbol_ticker(symbol="BTCUSDT")
+        # print full output (dictionary)
+        print(btc_price)
+
+        v_symbol = 'BEAMUSDT'
+        usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+        usdtBalance = get_balance('USDT')
+
+        while True:
+            usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='BTC').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='AVAX').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='DOGE').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+            # usdtBalance = v_client.get_asset_balance(asset='USDT').get('free')
+
+            print('İlk Başladı.........', usdtBalance, '-', datetime.now())
+        #
+        # print('Bakiye = ', usdtBalance)
+        # islem_tutar = float(usdtBalance) * 0.4
+        # islem_tutar = float(round(islem_tutar, 8))
+        # print('İşlem tutar = ', islem_tutar)
+        #
+        # # account = v_client.get_account()
+        # # order_buy = v_client.order_market_buy(symbol=v_symbol, quantity=float(islem_tutar))
+        # time.sleep(3)
+        # miktar = v_client.get_asset_balance(asset='PSG').get('free')
+        # # order_sell = v_client.order_market_sell(symbol='PSGUSDT', quantity=avaxBalance)
+        # print('Alınan Miktar', miktar)
+
+    except BinanceAPIException as e:
+        print(e.status_code)
+        print(e.message)
+        v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(e.status_code) + '-' + str(e.message) + '-' + str(
+            datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj)

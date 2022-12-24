@@ -145,8 +145,8 @@ def USDT_Tablo_Yaz():
         if symbol == 'NBTUSDT':
            print('Eee')
         else:
-            isUSDT = re.search("USDT$", symbol)
-            #isUSDT = re.search("BUSD$", symbol)
+            #isUSDT = re.search("USDT$", symbol)
+            isUSDT = re.search("BUSD$", symbol)
             if (isUSDT and active[symbol]):
                if ("UP" in symbol) or ("DOWN" in symbol):
                   print('kelime geçiyor')

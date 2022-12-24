@@ -70,7 +70,7 @@ def satirs():
 
 if __name__ == '__main__':
     v_dosya = "OLD/CRV.txt"
-    analiz(v_dosya)
+   # analiz(v_dosya)
     #dosyadan_db()
-    #kz_hesapla()
+    kz_hesapla()
     #satirs()
