@@ -52,8 +52,8 @@ def kz_hesapla(): #, v
             v_bakiye = x
             v_durum = v_bakiye[0]
             v_oran =  v_bakiye[1]
-            #v_kom = float((v_bak*75 / 100000)*2)
-            v_kom = float((v_bak / 1000) * 2)
+            v_kom = float((v_bak*75 / 100000)*2)
+            #v_kom = float((v_bak / 1000) * 2)
 
             if v_durum=='Kar':
                 v_bak = (v_bak + (v_bak*v_oran)/100)-v_kom
@@ -69,8 +69,8 @@ def satirs():
     print(len(open("OLD/ws_4_con4.py", "r").readlines()))
 
 if __name__ == '__main__':
-    v_dosya = "OLD/CRV.txt"
-   # analiz(v_dosya)
-    #dosyadan_db()
-    kz_hesapla()
+    v_dosya = "OLD/2022-12-29DREPBUSD.txt"
+    #analiz(v_dosya)
+    dosyadan_db()
+    #kz_hesapla()
     #satirs()

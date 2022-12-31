@@ -15,6 +15,13 @@ def analiz(mess,v_sembol):
         #f.write(message)
         f.close()
 
+def analiz_dk(mess,v_sembol):
+    v_dosya = "OLD/"+"DK_"+str(datetime.now())[0:10]+str(v_sembol)+".txt"
+    with open(v_dosya, "a" , encoding="utf-8") as f:
+        #f.write("\n"+message)
+        f.write(mess+"\n")
+        #f.write(message)
+        f.close()
 def kar_zarar_durumu(mess):
     TOKEN = "5789458481:AAHzXw9nTTrG6Lu8ieOz1LUl4e7J-TJrTfU"
     chat_id = "1372025054"

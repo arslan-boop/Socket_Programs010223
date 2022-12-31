@@ -955,8 +955,6 @@ def check_exist_ema_sat(v_symbol, v_interval, v_limit, v_cli):
         previous_ema5k = ema5k[-2]
         previous_ema20k = ema20k[-2]
 
-
-
         if previous_ema20k > previous_ema5k and last_ema5k > last_ema20k:
             v_ema_cross_up3m_s =1
         if  previous_ema20k < previous_ema5k and last_ema5k < last_ema20k:
