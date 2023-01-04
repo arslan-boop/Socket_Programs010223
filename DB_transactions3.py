@@ -6,6 +6,8 @@ import re
 from pprint import pprint
 from datetime import datetime
 
+import Telebot_v1
+
 con = sqlite3.connect("TRADE3.db")
 cursor = con.cursor()
 # def Table_create():
@@ -73,14 +75,38 @@ def Select_Balance(v_tip):
         #cursor.close()
         return v_buy
 #************************************************TABLO / DOSYA YENİLEMELER
+
+def high_oran_coin(): #, v
+    # Dosyaya açma
+        #v_semboldos = open("High_oran.txt", "w")
+        my_query = "SELECT name FROM USDT_COINS WHERE  PRICE_CHANGE_PERCENT >50 ORDER BY PRICE_CHANGE_PERCENT DESC "
+        #my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
+        cursor.execute(my_query)
+        i = 50
+        record = cursor.fetchmany(i) #.fetchall()
+        for x in record:
+            #print(x, 'kayıt= ', record[0])
+            # Dosyaya Yazma ----------------------------
+            y = str(x)
+            y = y.replace("('", "")
+            y = y.replace("',)", "")
+            v_mes = 'Yüksek Artımlı Coin var='+ y
+            Telebot_v1.mainma(v_mes)
+            #v_semboldos.write(y)
+            #v_semboldos.write("\n")
+        #cursor.close()
+        con.commit()
+        #con.close()
+
+
 def Sel_USDT(v_name): #, v
     # Dosyaya açma
         v_semboldos = open("Sembol3.txt", "w")
-        #my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 1000000 AND PRICE_CHANGE_PERCENT >1 ORDER BY PRICE_CHANGE_PERCENT DESC "
-        my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 1000000 ORDER BY PRICE_CHANGE_PERCENT DESC "
+        my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 1000000 AND PRICE_CHANGE_PERCENT >1 ORDER BY PRICE_CHANGE_PERCENT DESC "
+        #my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 500000 ORDER BY PRICE_CHANGE_PERCENT DESC "
         #my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
         cursor.execute(my_query)
-        i = 100
+        i = 40
         record = cursor.fetchmany(i) #.fetchall()
         for x in record:
             #print(x, 'kayıt= ', record[0])

@@ -45,7 +45,7 @@ v_hedef_bid_global, v_hedef_ask_global, v_alim_var, v_alim_fiyati, v_alim_miktar
 v_last_price_g, v_alim_zamani, v_alim_timestamp, v_open_price, genel_alimlar, genel_satimlar, orderbook = 0, '', 0, 0, [], [], {}
 v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
 v_last_update, updates, v_time_before, v_time, v_time_before_dk, v_time_dk, v_zipla = '2022', 0, '', '', '', '', 0
-closes, highes, lowes = [],[],[]
+closes, highes, lowes = [], [], []
 v_dizi_bov, v_dizi_bov_top, v_dizi_avo, v_dizi_avo_top, v_dizi_fiyat, v_fark_tutar_bov, v_fark_tutar_bov_top, = [], [], [], [], [], [], []
 v_dizi_bov_g, v_dizi_bov_top_g, v_dizi_avo_g, v_dizi_avo_top_g, v_dizi_fiyat_g, v_fark_tutar_bov_g, v_fark_tutar_bov_top_g = [], [], [], [], [], [], []
 v_dizi_bov_g_dk, v_dizi_bov_top_g_dk, v_dizi_avo_g_dk, v_dizi_avo_top_g_dk, v_dizi_fiyat_g_dk, v_fark_tutar_bov_g_dk, v_fark_tutar_bov_top_g_dk = [], [], [], [], [], [], []
@@ -80,6 +80,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
         try:
             # v_frame = {side: pd.DataFrame(data=depth_dict[side], columns=["price", "quantity"], dtype=float)
             #           for side in ["bids", "asks"]}
+
             bids_price = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 0]
             bids_quantity = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 1]
             df_bids = pd.DataFrame(dtype=float)
@@ -215,21 +216,21 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                 else:
                     sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani)
                 v_alim_var == 0
-                time.sleep(30)
+                time.sleep(60)
             elif float(v_last_price_g) < float(v_hedef_ask_global):
                 if v_test_prod == 'P':
                     sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 2, v_alim_zamani)
                 else:
                     sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 2, v_alim_zamani)
                 v_alim_var == 0
-                time.sleep(30)
+                time.sleep(60)
             elif v_satim_timestamp >= v_alim_timestamp:
                 if v_test_prod == 'P':
                     sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 3, v_alim_zamani)
                 else:
                     sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 3, v_alim_zamani)
                 v_alim_var == 0
-                time.sleep(30)
+                time.sleep(60)
             # elif v_ters_kesim == 1:
             #     if v_test_prod == 'P':
             #         sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani)
@@ -685,7 +686,7 @@ def buy_coin(v_symbol, v_islem_tutar, v_bidask_fark_tutar, bid_tbl, ask_tbl, v_v
             v_hedef_ask_global = v_hedef_ask
 
             current_timestamp = round(time.time() * 1000)
-            v_alim_timestamp = (current_timestamp + (60000)) / 1000
+            v_alim_timestamp = (current_timestamp + (90000)) / 1000
             # v_alim_zamani = str(datetime.now())[0:19]
         else:
             v_hata = 'Alım işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
@@ -896,7 +897,7 @@ def on_close_f(ws_front):
 # ***********************************************************************************************************************
 def on_message_f(ws_front, message):
     global v_last_price_g, v_open_price, closes, highes, lowes, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales
-    #v_l_c_p, v_p_c_p2, v_1m_c, v_p_c_p3, v_3m_c, v_p_c_p5, v_5m_c = 0, 0, 0, 0, 0, 0, 0
+    # v_l_c_p, v_p_c_p2, v_1m_c, v_p_c_p3, v_3m_c, v_p_c_p5, v_5m_c = 0, 0, 0, 0, 0, 0, 0
 
     json_message = json.loads(message)
     # print('Gelen mesaj: ', json_message)
@@ -907,37 +908,46 @@ def on_message_f(ws_front, message):
     high = float(candle['h'])
     low = float(candle['l'])
     v_symbol = candle['s']
-    #print('closes dizisi ik', v_symbol, closes, datetime.now())
+    # print('closes dizisi ik', v_symbol, closes, datetime.now())
     # print('Geldi', v_symbol, close, '-', open, '-', high, '-', low, '-', datetime.now())
     is_candle_closed = candle['x']
 
     if is_candle_closed:
-        #print(close, 'closes dizisi çerde', v_symbol, closes, datetime.now())
-        time.sleep(0.1)
+        # print(close, 'closes dizisi çerde', v_symbol, closes, datetime.now())
+        time.sleep(2.333)
         closes.append(close)
         highes.append(high)
         lowes.append(low)
-        #print('Geldi--kapa', v_symbol, close, '-', open, '-', high, '-', low, '***', closes[-1], closes[-2], closes[-3], datetime.now())
+        # print('Geldi--kapa', v_symbol, close, '-', open, '-', high, '-', low, '***', closes[-1], closes[-2], closes[-3], datetime.now())
         # print('Closes', v_symbol, closes[-1], closes[-2], closes[-3])
-        v_ema_cross_up3m, v_ema_cross_down3m, v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c = check_exist_ema_second(
-            v_symbol, closes, highes, lowes, 10, 60)
-        v_or = 0.005
+        v_ema_cross_up3m, v_ema_cross_down3m, v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_30m_c, v_45m_c, v_60m_c = check_exist_ema_second(v_symbol, closes, highes, lowes, 10, 60)
+        v_or = 0.5
 
-        if v_1m_c >10 or v_1m_c <-10  :
+        if v_1m_c > 10 or v_1m_c < -10:
             v_hata_mesaj = 'HATAA..  = ' + str(v_symbol) + ' Fiyat=' + \
                            str(close) + 'Oran=' + "{:.2f}".format(float(v_1m_c)) + \
                            'Son =' + str(closes[-1]) + 'Prev=' + str(closes[-2]) + 'Zaman=' + str(datetime.now())
             Telebot_v1.mainma(v_hata_mesaj)
             print('bekle')
         # if v_1m_c > v_or  and v_3m_c > v_or and v_5m_c > v_or and v_15m_c > v_or and v_60m_c > v_or:
-        if v_1m_c > v_or :#and close > float(v_3m_c) and close > float(v_5m_c) and close > float( v_15m_c) and close > float(v_60m_c):
-            v_hizli_gonzales = 1
-            v_hata_mesaj = 'Hızlı Artan Var..  = ' + str(v_symbol) +  ' Fiyat=' +  \
-                           str(close) +  'Oran=' +"{:.2f}".format(float(v_1m_c)) + \
-                           'Son =' + str(closes[-1]) +  'Prev=' + str(closes[-2]) + 'Zaman=' + str(datetime.now())
-            Telebot_v1.mainma(v_hata_mesaj)
-    else:
-        print('Değişim Anormal Yok= ', v_symbol, datetime.now())
+
+        if v_1m_c > v_or and close > float(v_3m_c) and close > float(v_5m_c) \
+                and close > float(v_15m_c) and close > float(v_30m_c) and close > float(v_45m_c) and close > float(v_60m_c):
+            # eKSTRA KONTROL
+            if float(v_last_price_g) < float(close):
+                v_hata_mesaj = 'Eksiye Gidiş Başlamıştı girmedim....  = ' + str(v_symbol) + ' Fiyat=' + \
+                               str(close) + 'Oran=' + "{:.2f}".format(float(v_1m_c)) + \
+                               'Son =' + str(closes[-1]) + 'Prev=' + str(closes[-2]) + 'Zaman=' + str(datetime.now())
+                Telebot_v1.mainma(v_hata_mesaj)
+            else:
+                v_hizli_gonzales = 1
+                v_hata_mesaj = 'Hızlı Artan Var..  = ' + str(v_symbol) + ' Fiyat=' + \
+                               str(close) + 'Oran=' + "{:.2f}".format(float(v_1m_c)) + \
+                               'Son =' + str(closes[-1]) + 'Prev=' + str(closes[-2]) + 'Zaman=' + str(datetime.now())
+                Telebot_v1.mainma(v_hata_mesaj)
+        else:
+            print('Değişim Anormal Yok= ', v_symbol, datetime.now())
+            v_hizli_gonzales = 0
     """
     if v_ema_cross_up3m == True:
         # print('Kestiiiii',datetime.now())
@@ -958,9 +968,6 @@ def on_message_f(ws_front, message):
         closes.pop(0)
         highes.pop(0)
         lowes.pop(0)
-
-
-#         np_closes = numpy.array(closes)
 
 
 def check_exist_ema_second(v_symbol, close, high, low, v_kisa, v_uzun):
@@ -1051,39 +1058,56 @@ def check_exist_ema_second(v_symbol, close, high, low, v_kisa, v_uzun):
         adx_cross_down = previous_plus_di > previous_minus_di and last_minus_di > last_plus_di
         """
         if v_len < 2:
-            return ema_cross_upk, ema_cross_downk, 0, 0, 0, 0, 0
+            return ema_cross_upk, ema_cross_downk, 0, 0, 0, 0, 0, 0, 0
         else:
             v_p_c_p2 = close[-2]
             v_1m_c = float(((v_l_c_p - v_p_c_p2) * 100) / v_p_c_p2)
 
         if v_len < 4:
-            return ema_cross_upk, ema_cross_downk, v_1m_c, 0, 0, 0, 0
+            return ema_cross_upk, ema_cross_downk, v_1m_c, 0, 0, 0, 0, 0, 0
         else:
             v_p_c_p3 = close[-3]
-            v_3m_c = float(((v_l_c_p - v_p_c_p3) * 100) / v_p_c_p3)
+            # v_3m_c = float(((v_l_c_p - v_p_c_p3) * 100) / v_p_c_p3)
         if v_len < 6:
-            return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, 0, 0, 0
+            # return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, 0, 0, 0,0,0
+            return ema_cross_upk, ema_cross_downk, v_1m_c, v_p_c_p3, 0, 0, 0, 0, 0
         else:
             v_p_c_p5 = close[-5]
-            v_5m_c = float(((v_l_c_p - v_p_c_p5) * 100) / v_p_c_p5)
+            # v_5m_c = float(((v_l_c_p - v_p_c_p5) * 100) / v_p_c_p5)
 
         if v_len < 16:
-            return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, v_5m_c, 0, 0
+            # return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, v_5m_c, 0, 0,0,0
+            return ema_cross_upk, ema_cross_downk, v_1m_c, v_p_c_p3, v_p_c_p5, 0, 0, 0, 0
         else:
             v_p_c_p15 = close[-15]
-            v_15m_c = float(((v_l_c_p - v_p_c_p15) * 100) / v_p_c_p15)
+            # v_15m_c = float(((v_l_c_p - v_p_c_p15) * 100) / v_p_c_p15)
+
+        if v_len < 31:
+            # return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, v_5m_c, v_15m_c, 0,0,0
+            return ema_cross_upk, ema_cross_downk, v_1m_c, v_p_c_p3, v_p_c_p5, v_p_c_p15, 0, 0, 0
+        else:
+            v_p_c_p30 = close[-30]
+            # v_30m_c = float(((v_l_c_p - v_p_c_p30) * 100) / v_p_c_p30)
+
+        if v_len < 46:
+            # return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_30m_c,0,0
+            return ema_cross_upk, ema_cross_downk, v_1m_c, v_p_c_p3, v_p_c_p5, v_p_c_p15, v_p_c_p30, 0, 0
+        else:
+            v_p_c_p45 = close[-45]
+            # v_45m_c = float(((v_l_c_p - v_p_c_p45) * 100) / v_p_c_p45)
 
         if v_len < 61:
-            return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, v_5m_c, v_15m_c, 0
+            # return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c, v_5m_c, v_15m_c,v_30m_c,v_45m_c, 0
+            return ema_cross_upk, ema_cross_downk, v_1m_c, v_p_c_p3, v_p_c_p5, v_p_c_p15, v_p_c_p30, v_p_c_p45, 0
         else:
             v_p_c_p60 = close[-60]
-            v_60m_c = float(((v_l_c_p - v_p_c_p60) * 100) / v_p_c_p60)
+            # v_60m_c = float(((v_l_c_p - v_p_c_p60) * 100) / v_p_c_p60)
 
         # return ema_cross_upk, ema_cross_downk, ema_cross_up, ema_cross_down, ema_arti, ema_artik, \
         #        v_last_closing_price, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, \
         #        v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p
         # return ema_cross_upk, ema_cross_downk, v_1m_c, v_3m_c,v_5m_c, v_15m_c,v_60m_c
-        return ema_cross_upk, ema_cross_downk, v_1m_c, v_p_c_p3, v_p_c_p5, v_p_c_p15, v_p_c_p60
+        return ema_cross_upk, ema_cross_downk, v_1m_c, v_p_c_p3, v_p_c_p5, v_p_c_p15, v_p_c_p30, v_p_c_p45, v_p_c_p60
 
 
 # ***********************************************************************************************************************
@@ -1092,6 +1116,7 @@ def son_fiyat_getir(msg):
     # print('Fiyat', float(price[v_symbol]))
     if msg['e'] != 'error':
         v_last_price_g = float(msg['c'])
+        # print('Fiyat', float(v_last_price_g),datetime.now())
     else:
         v_last_price_g = 0
         vmesaj = 'Hata - Son fiyat sıfır!..btc_pairs_trade  = ' + str(v_sembol_islenen)
@@ -1153,12 +1178,12 @@ def dosya_aktar():
             v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
             v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
             v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
-            time.sleep(0.33)
+            # time.sleep(0.33)
             # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
             if 1 == 1:  # v_3m_c > 0 and v_ema_arti_3m == 1:
-                if i <= 40:
+                if i <= 30:
                     v_dosya_coin.append(line)
-                    print('Dosyaya eklenen Coin..: ', line, i,'**', datetime.now())
+                    print('Dosyaya eklenen Coin..: ', line, i, '**', datetime.now())
                 else:
                     print('Devamı...Dosyaya eklenen Coin..: ', line, i, datetime.now())
                 i += 1
@@ -1167,7 +1192,7 @@ def dosya_aktar():
     dosya.close()
     print('Dosya Tamamlandı', v_dosya_coin)
 
-    #***************Temizlik***********************
+    # ***************Temizlik***********************
     with open('sabikalilar.txt', 'r') as dosya_sabika:
         i = 0
         for line in dosya_sabika.read().splitlines():
@@ -1177,13 +1202,12 @@ def dosya_aktar():
     print('Sabıkalılar Temizlendi.', v_dosya_coin)
 
 
-
 # ***********************************************************************************************************************
 def run_frontdata(v_sem, v_int):
-    global  closes
+    global closes
     try:
         get_first_set_of_closes(v_sem, v_int)
-        print('Clo', closes)
+        # print('Clo', closes)
         # EMA, ADX gibi indikatörleri sn likte oluşturmak için kline lı kullanım..Yenileme 2 sn. Ama her sn veri geliyor.
         socket_front(v_sem, v_int)
         # Son fiyatı almak için. Sn lik data yenileme
@@ -1213,12 +1237,13 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g, v_islem_tutar, v_volume_fark_or
                v_zarar_oran, minVolumePerc, v_test_prod):
     print('Başladı ', v_sembol_g, datetime.now())
     try:
-        time.sleep(1.333)
+        # time.sleep(1.333)
         run_frontdata(v_sembol_g, v_inter_g)
-        time.sleep(1.33)
-        # basla(v_limit_g, v_sembol_g)
+        time.sleep(0.33)
+        basla(v_limit_g, v_sembol_g)
         # time.sleep(2.33)
-        # islem(v_sembol_g, v_limit_g, v_islem_tutar, v_volume_fark_oran, v_oran, v_kar_oran, v_zarar_oran, minVolumePerc,v_test_prod)
+        islem(v_sembol_g, v_limit_g, v_islem_tutar, v_volume_fark_oran, v_oran, v_kar_oran, v_zarar_oran, minVolumePerc,
+              v_test_prod)
     except BinanceAPIException as e:
         print('Status code', str(e.status_code), v_sembol_g)
         print('Mesajı', str(e.message), v_sembol_g)
@@ -1235,7 +1260,7 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_volume_fark_oran, v_oran, v_ka
     v_on_zaman = ''
     v_genel_orderbook = {}
     v_genel_orderbook = orderbook  # get_snapshot(v_sembol_g, v_limit_g)
-    time.sleep(5.66)
+    time.sleep(1.66)
     try:
         while (True):
             v_zaman = str(datetime.now())[0:16]
@@ -1327,17 +1352,17 @@ def generateStochasticRSI(close_array, timeperiod):
 def get_first_set_of_closes(v_symbol, v_inter):
     global closes, highes, lowes, v_dosya_coin
     try:
-            if v_inter == '1m':
-                for kline in v_client.get_historical_klines(v_symbol, '1m', "1 hour ago UTC"):
-                    closes.append(float(kline[4]))
-                    highes.append(float(kline[2]))
-                    lowes.append(float(kline[3]))
-                print('f',closes)
-            else:
-                for kline in v_client.get_historical_klines(v_symbol, '1s', "5 minute ago UTC"):
-                    closes.append(float(kline[4]))
-                    highes.append(float(kline[2]))
-                    lowes.append(float(kline[3]))
+        if v_inter == '1m':
+            for kline in v_client.get_historical_klines(v_symbol, '1m', "1 hour ago UTC"):
+                closes.append(float(kline[4]))
+                highes.append(float(kline[2]))
+                lowes.append(float(kline[3]))
+            print('f', closes)
+        else:
+            for kline in v_client.get_historical_klines(v_symbol, '1s', "5 minute ago UTC"):
+                closes.append(float(kline[4]))
+                highes.append(float(kline[2]))
+                lowes.append(float(kline[3]))
 
     except BinanceAPIException as e:
         print('Status code', str(e.status_code), v_symbol)
@@ -1488,7 +1513,7 @@ def parametre_ata():
     if v_mod == 'S':
         v_volume_fark_oran = 0.03  # İlgili bid veya ask satırının tüm tablodaki volume oranı
         v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
-        v_kar_oran = 1.004
+        v_kar_oran = 1.005
         v_zarar_oran = 0.994
         minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
     elif v_mod == 'B':
@@ -1507,7 +1532,8 @@ def parametre_ata():
     return v_inter_g, v_limit_g, v_in_g, v_islem_tutar, v_volume_fark_oran, v_oran, v_kar_oran, \
            v_zarar_oran, minVolumePerc, v_test_prod
 
-#***************************************************
+
+# ***************************************************
 def degiskenleri_basa_al():
     global v_hedef_bid_global, v_hedef_ask_global, v_alim_var, v_alim_fiyati, v_alim_miktar, v_kesim, v_ters_kesim, v_hizli_gonzales
     global v_last_price_g, v_alim_zamani, v_alim_timestamp, v_open_price, genel_alimlar, genel_satimlar, orderbook
@@ -1544,7 +1570,7 @@ if __name__ == '__main__':
                 dosyalari_temizle()
                 dosya_aktar()
                 degiskenleri_basa_al()
-                #get_first_set_of_closes(v_symbol, v_inter_g)
+                # get_first_set_of_closes(v_symbol, v_inter_g)
 
                 # Eğer uygun coin bulamadıysan yeniden başa dön
                 if len(v_dosya_coin) < 1:
@@ -1561,7 +1587,7 @@ if __name__ == '__main__':
                                range(len(v_dosya_coin))]
                     # print('Başla.', results)
                     while True:
-                        time.sleep(3600)
+                        time.sleep(800)
                         v_esit = alinan_satilan_esitmi()
                         # v_esit =0
                         if v_esit == 1:

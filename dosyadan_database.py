@@ -72,5 +72,5 @@ if __name__ == '__main__':
     v_dosya = "OLD/2022-12-29DREPBUSD.txt"
     #analiz(v_dosya)
     dosyadan_db()
-    #kz_hesapla()
+    kz_hesapla()
     #satirs()
