@@ -267,7 +267,7 @@ def dosya_aktar():
     DB_transactions3.File_write()
     DB_transactions3.con.commit()
     v_dosya_coin = []
-    with open('../Sembol3.txt', 'r') as dosya:
+    with open('../DOSYALAR/Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_symbol = line

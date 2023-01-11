@@ -406,8 +406,8 @@ def socket_front(v_symbol, v_inter):
 
 
 def dosyalari_temizle():
-    open("../Alinanlar.txt", 'w').close()
-    open("../Satilanlar.txt", 'w').close()
+    open("../DOSYALAR/Alinanlar.txt", 'w').close()
+    open("../DOSYALAR/Satilanlar.txt", 'w').close()
 
 
 def dosya_aktar():
@@ -418,7 +418,7 @@ def dosya_aktar():
     DB_transactions3.con.commit()
 
     v_dosya_coin = []
-    with open('../Sembol3.txt', 'r') as dosya:
+    with open('../DOSYALAR/Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_symbol = line
@@ -611,8 +611,8 @@ def islem(v_sembol_g, v_limit_g):
 
 def alinan_satilan_esitmi():
     # print(len(open("Sonuc.txt", "r").readlines()))
-    genel_satimlar = len(open("../Satilanlar.txt", "r").readlines())
-    genel_alimlar = len(open("../Alinanlar.txt", "r").readlines())
+    genel_satimlar = len(open("../DOSYALAR/Satilanlar.txt", "r").readlines())
+    genel_alimlar = len(open("../DOSYALAR/Alinanlar.txt", "r").readlines())
 
     if genel_satimlar == genel_alimlar:
         return 1

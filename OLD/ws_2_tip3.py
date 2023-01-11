@@ -28,7 +28,7 @@ def coin_bul():
     v_last_buyed_coin = 'YYY'
     v_return_coin, v_son_fiyatm, v_interval, v_degis_oran, v_degis_oran1 = 'XXX', 0, '1m', 1, 0.4
 
-    with open('../Sembol3.txt', 'r') as dosya:
+    with open('../DOSYALAR/Sembol3.txt', 'r') as dosya:
         for line in dosya.read().splitlines():
             # print(line)
             if v_last_buyed_coin == 'YYY':

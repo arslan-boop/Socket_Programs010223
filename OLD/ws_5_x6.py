@@ -32,7 +32,7 @@ import concurrent.futures
 # ssl den doğacak hataları bertaraf etmek için
 requests.packages.urllib3.disable_warnings()
 
-DB_FILE = "TRADE3.DB"
+DB_FILE = "../TRADE3.DB"
 con = sqlite3.connect(DB_FILE, timeout=10)
 cursor = con.cursor()
 
@@ -47,18 +47,13 @@ genel_alimlar = []
 genel_satimlar = []
 orderbook = {}
 v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
-v_genel_tip = 'EMA - '
+
 # global orderbook, updates, v_last_update
 v_last_update = '2022'
 orderbook = []
 updates = 0
-v_ema_cross_up3m, v_ema_cross_down3m  = 0, 0
-v_ema_cross_up3m_on, v_ema_cross_down3m_on  = 0, 0
 
-v_ema_cross_up3m_s, v_ema_cross_down3m_s  = 0, 0
-v_ema_cross_up3m_on_s, v_ema_cross_down3m_on_s  = 0, 0
-v_adx_arti =0
-v_adx_cross_up = 0
+
 def floor_step_size(quantity, stepSize):
     step_size_dec = Decimal(str(stepSize))
     return float(int(Decimal(str(quantity)) / step_size_dec) * step_size_dec)
@@ -80,23 +75,13 @@ def get_round_step_quantity(v_symbol, qty):
 
 def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_pri, v_islem_tutar):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati, v_last_price_g, v_alim_miktar
-    global v_client, v_alim_timestamp, v_alim_zamani, \
-        v_genel_tip,v_ema_cross_up3m, v_ema_cross_down3m,v_ema_cross_up3m_on, v_ema_cross_down3m_on, \
-        v_ema_cross_up3m_s, v_ema_cross_down3m_s, v_ema_cross_up3m_on_s, v_ema_cross_down3m_on_s,v_adx_arti, \
-        v_adx_cross_up
+    global v_client, v_alim_timestamp, v_alim_zamani
 
-    v_volume_fark_oran = 0.08  # İlgili bid veya ask satırının tüm tablodaki volume oranı
+    v_volume_fark_oran = 0.05  # İlgili bid veya ask satırının tüm tablodaki volume oranı
     v_oran = 0.03  # ask ve bidlerin listede gideceği fiyat oranı. İlk kayıt 100 ve oran %5 ise 105 ile 95 arasında fiyatı olan emirleri alıyoruz
-    v_kar_oran = 1.006
-    v_zarar_oran = 0.99
+    v_kar_oran = 1.003
+    v_zarar_oran = 0.995
     minVolumePerc = 0.01  # volumesi yani toplam tutarı  tüm tutarın % xx den büyük olan satırları alıyoruz
-
-    v_ema_cross_up3m, v_ema_cross_down3m = 0, 0
-    v_ema_cross_up3m_on, v_ema_cross_down3m_on = 0, 0
-    v_ema_cross_up3m_s, v_ema_cross_down3m_s = 0, 0
-    v_ema_cross_up3m_on_s, v_ema_cross_down3m_on_s = 0, 0
-    v_adx_arti = 0
-    v_adx_cross_up = 0
 
     if v_alim_var == 0:
         depth_dict = v_genel_orderbook
@@ -165,42 +150,37 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
             v_vol_oran_bid = (float(bid_tbl['quantity'].sum()) / float(volumewhale)) * 100
             v_vol_oran_ask = (float(ask_tbl['quantity'].sum()) / float(volumewhale)) * 100
 
-            #v_ema_cross_up3m, v_ema_cross_down3m = check_exist_ema(v_symbol, '1m', 500, v_client)
-            v_ema_cross_up3m, ema_artik,v_adx_cross_up, v_adx_arti= check_exist_ema(v_symbol, '3m', 500, v_client)
-            # if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100) \
-            #         and float(ask_tbl['quantity'].sum()) < 2 and v_vol_oran_ask < 1 and \
-            #         float(v_vol_oran_bid) < 20:
-            if v_ema_cross_up3m ==1  and v_adx_arti ==1 : #v_adx_cross_up == 1:
+            if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100) :
+                    # and float(ask_tbl['quantity'].sum()) <2 and v_vol_oran_ask <1 and \
+                    # float(v_vol_oran_bid) <20:
                 # ************************************Alım İşlemi******************************************
-                # order_buy = v_client.order_market_buy(symbol=v_symbol, quoteOrderQty=float(v_islem_tutar))
-                if 1 == 1:  # order_buy['status'] == 'FILLED':
-                    # print('success')
-                    # p = 0
-                    # i = len(order_buy['fills'])
-                    # v_total_price = 0
-                    # v_quantity_filled = 0
-                    #
-                    # for p in range(i):
-                    #     v_total_price = v_total_price + float(order_buy['fills'][p]['price']) * float(
-                    #         order_buy['fills'][p]['qty'])
-                    #     v_quantity_filled = v_quantity_filled + float(order_buy['fills'][p]['qty'])
-                    #
-                    # v_alim_miktar = float(v_quantity_filled)  # float(order_buy['origQty'])
-                    # v_alim_fiyati = float(v_total_price) / float(v_quantity_filled)
-                    # v_son_fiyat = v_alim_fiyati
-                    v_son_fiyat = float(v_last_price_g)
-                    #
-                    # # v_exqty = order_buy['executedQty']
-                    # v_times = order_buy['transactTime']
-                    # v_times = v_times / 1000
-                    # # now = datetime.now()
-                    # # timestamp = datetime.timestamp(now)
-                    # dt_v_trantime = datetime.fromtimestamp(float(v_times))
-                    # v_alim_zamani = str(dt_v_trantime)
-                    v_alim_zamani = str(datetime.now())[0:19]
+                order_buy = v_client.order_market_buy(symbol=v_symbol, quoteOrderQty=float(v_islem_tutar))
+                if order_buy['status'] == 'FILLED':
+                    print('success')
+                    p = 0
+                    i = len(order_buy['fills'])
+                    v_total_price = 0
+                    v_quantity_filled = 0
+
+                    for p in range(i):
+                        v_total_price = v_total_price + float(order_buy['fills'][p]['price']) * float(
+                            order_buy['fills'][p]['qty'])
+                        v_quantity_filled = v_quantity_filled + float(order_buy['fills'][p]['qty'])
+
+                    v_alim_miktar = float(v_quantity_filled)  # float(order_buy['origQty'])
+                    v_alim_fiyati = float(v_total_price) / float(v_quantity_filled)
+                    v_son_fiyat = v_alim_fiyati
+
+                    # v_exqty = order_buy['executedQty']
+                    v_times = order_buy['transactTime']
+                    v_times = v_times / 1000
+                    # now = datetime.now()
+                    # timestamp = datetime.timestamp(now)
+                    dt_v_trantime = datetime.fromtimestamp(float(v_times))
+                    v_alim_zamani = str(dt_v_trantime)  # str(datetime.now())[0:19]
                     # ****************************************************************************************
                     # v_son_fiyat = float(v_last_price_g)
-                    v_alim_fiyati = v_son_fiyat
+                    # v_alim_fiyati = v_son_fiyat
 
                     v_hedef_bid = float(v_son_fiyat * v_kar_oran)
                     v_hedef_ask = float(v_son_fiyat * v_zarar_oran)
@@ -208,13 +188,15 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                     v_hedef_ask_global = v_hedef_ask
 
                     current_timestamp = round(time.time() * 1000)
-                    v_alim_timestamp = (current_timestamp + (2700000)) / 1000
+                    v_alim_timestamp = (current_timestamp + (90000)) / 1000
+                    # v_alim_zamani = str(datetime.now())[0:19]
                     v_alim_var = 1
 
-                    v_mess = v_genel_tip + str(v_symbol) + '--' + '*Tuttum Seni* HEDEF == ' + '--' + "{:.8f}".format(
+                    v_mess = str(v_symbol) + '--' + '*Tuttum Seni* HEDEF == ' + '--' + "{:.8f}".format(
                         float(v_hedef_bid)) + \
                              '--' + ' Zaman = ' + '--' + str(v_alim_zamani) + '--' + \
                              'Fiyat = ' + '--' + "{:.8f}".format(float(v_alim_fiyati)) + '--' + \
+                             'Miktar = ' + '--' + "{:.8f}".format(float(v_alim_miktar)) + '--' + \
                              'İşlem Tutar = ' + '--' + "{:.8f}".format(float(v_islem_tutar)) + '--' + \
                              'Fark Tutar = ' + '--' + "{:.1f}".format(float(v_bidask_fark_tutar)) + '--' + \
                              'Bid Topl= ' + '--' + "{:.1f}".format(float(bid_tbl['quantity'].sum())) + '--' + \
@@ -224,9 +206,9 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
                     # Telegram mesajo
                     Telebot_v1.mainma(v_mess)
                     Telebot_v1.genel_alimlar(v_symbol, 'A')
-                    # v_sembolmik = v_symbol.replace("USDT", "")
-                    # v_alim_miktar = v_client.get_asset_balance(asset=v_sembolmik).get('free')
-                    # v_alim_miktar = get_round_step_quantity(v_symbol, float(v_alim_miktar))
+                    v_sembolmik = v_symbol.replace("USDT", "")
+                    v_alim_miktar = v_client.get_asset_balance(asset=v_sembolmik).get('free')
+                    v_alim_miktar = get_round_step_quantity(v_symbol, float(v_alim_miktar))
 
                 else:
                     v_hata = 'Alım işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
@@ -244,105 +226,219 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_genel_orderbook, v_open_p
         try:
             v_son_fiyat = float(v_last_price_g)
             print(str(v_symbol), 'İçerde alım var.......!!', str(datetime.now())[0:19], 'Hedefi = ',
-                  str(v_hedef_bid_global), 'Son Fiyat = ', str(v_son_fiyat))
+                  str(v_hedef_bid_global), 'Son Fiyat = ', str(v_last_price_g))
 
-            check_exist_ema_sat(v_symbol, '1m', 500, v_client)
+            # if float(v_son_fiyat) >= float(v_hedef_bid_global):
+            if float(v_last_price_g) > float(v_hedef_bid_global):
+                # ***************************SATIM*******************************************
+                order_sell = v_client.order_market_sell(symbol=v_symbol, quantity=float(v_alim_miktar))
+                # v_son_fiyat = float(v_last_price_g)
+                if order_sell['status'] == 'FILLED':
+                    print('success')
 
-            if float(v_son_fiyat) >= float(v_hedef_bid_global):
-                v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
-                v_mess1 = v_genel_tip + 'Karla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_bid_global)) + '- Sembol :' + str(
-                    v_symbol) + \
-                          '- Alım Fiyatı :' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                          '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
-                    datetime.now()) + \
-                          'Alım Zamanı : ' + str(v_alim_zamani)
-                v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                   '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now()) \
-                                   + '*' + 'Alım_Zaman'+'*' + str(v_alim_zamani)
-                print(v_mess1)
-                # ******************
-                Telebot_v1.mainma(v_mess1)
-                Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
+                    p = 0
+                    i = len(order_sell['fills'])
+                    v_total_price = 0
+                    v_quantity_filled = 0
+                    for p in range(i):
+                        v_total_price = v_total_price + float(order_sell['fills'][p]['price']) * float(
+                            order_sell['fills'][p]['qty'])
+                        v_quantity_filled = v_quantity_filled + float(order_sell['fills'][p]['qty'])
 
-                v_alim_var = 0
-                Telebot_v1.genel_alimlar(v_symbol, 'S')
-                # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
-                time.sleep(60)
-            elif float(v_son_fiyat) < float(v_hedef_ask_global):
-                v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
-                v_zarprofit_oran = float(v_zarprofit_oran)
+                    v_satim_miktar = float(v_quantity_filled)  # float(order_buy['origQty'])
+                    v_satim_fiyati = float(v_total_price) / float(v_quantity_filled)
+                    v_son_fiyat = v_satim_fiyati
+                    quantity_filled = order_sell['fills'][0]['qty']
 
-                v_mess1 = v_genel_tip +'Zararla Sattı..Hedefi : ' + "{:.6f}".format(float(v_hedef_ask_global)) + '- Sembol :' + str(
-                    v_symbol) + \
-                          '- Alım Fiyatı :' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                          '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-                    datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
-                print(v_mess1)
-                v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-                    float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                   '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now()) \
-                                   + '*' + 'Alım_Zaman' + '*' + str(v_alim_zamani)
-                Telebot_v1.mainma(v_mess1)
-                Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
-                v_alim_var = 0
-                Telebot_v1.genel_alimlar(v_symbol, 'S')
-                # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
-                time.sleep(60)
-            elif (v_satim_timestamp >= v_alim_timestamp) or v_ema_cross_down3m_s == 1:
-                # 1 dk yı geçtiği için satacak
-                if float(v_son_fiyat) > float(v_alim_fiyati):
-                    vm_karzar = v_genel_tip +'KARLA KAPADI - '
-                    v_profit_oran = float(((v_son_fiyat - v_alim_fiyati) * 100) / v_alim_fiyati)
+                    # price = order_sell['fills'][0]['price']
+                    # v_satim_fiyati = #float(price)
+                    # v_son_fiyat = v_satim_fiyati
+                    # v_satim_miktar = float(order_sell['origQty'])
 
-                    v_mess1 = vm_karzar + '...Hedefi : ' + "{:.6f}".format(
-                        float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                              '- Alım Fiyatı :' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                              '- Kar Oranı :' + "{:.6f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
-                        datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
-                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                       '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(datetime.now()) \
-                                       + '*' + 'Alım_Zaman' + '*' + str(v_alim_zamani)
-                    print(v_mess1)
+                    v_times = order_sell['transactTime']
+                    v_times = v_times / 1000
+                    dt_v_trantime = datetime.fromtimestamp(float(v_times))
+                    v_satim_zamani = str(dt_v_trantime)  # str(datetime.now())[0:19]
+
+                    if float(v_satim_fiyati) > float(v_alim_fiyati):
+                        v_profit_oran = float(((float(v_satim_fiyati) - v_alim_fiyati) * 100) / v_alim_fiyati)
+                        v_kisa_mes = 'Karla Sattı..'
+                        v_oran_mesaj = '- Kar Oranı :'
+                    else:
+                        v_profit_oran = float(((v_alim_fiyati - float(v_satim_fiyati)) * 100) / v_alim_fiyati)
+                        v_kisa_mes = 'Zararla Sattı..'
+                        v_oran_mesaj = '- Zarar Oranı :'
+
+                    v_mess1 = v_kisa_mes + ' Hedefi : ' + "{:.8f}".format(
+                        float(v_hedef_bid_global)) + '- Sembol :' + str(
+                        v_symbol) + \
+                              '- Alım Fiyatı :' + "{:.8f}".format(
+                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                              str(v_oran_mesaj) + "{:.8f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
+                        v_satim_zamani) + \
+                              'Alım Zamanı : ' + str(v_alim_zamani)
+                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.8f}".format(
+                        float(v_alim_fiyati)) + '*' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                                       '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(
+                        v_satim_zamani)  # + str(datetime.now())[0:19]
+                    # print(v_mess1)
                     # ******************
                     Telebot_v1.mainma(v_mess1)
                     Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
                     v_alim_var = 0
                     Telebot_v1.genel_alimlar(v_symbol, 'S')
                     # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
-                    time.sleep(60)
-                elif float(v_alim_fiyati) >= float(v_son_fiyat):
-                    vm_karzar = v_genel_tip +'ZARARLA KAPADI - '
-                    v_zarprofit_oran = float(((v_alim_fiyati - v_son_fiyat) * 100) / v_alim_fiyati)
-                    v_zarprofit_oran = float(v_zarprofit_oran)
+                else:
+                    v_hata = 'SATIM işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
+                    Telebot_v1.mainma(v_hata)
 
-                    v_mess1 = vm_karzar + '..Hedefi : ' + "{:.6f}".format(
-                        float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
-                              '- Alım Fiyatı :' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.6f}".format(float(v_son_fiyat)) + \
-                              '- Zarar Oranı :' + "{:.6f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
-                        datetime.now()) + 'Alım Zamanı : ' + str(v_alim_zamani)
-                    print(v_mess1)
-                    v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.6f}".format(
-                        float(v_alim_fiyati)) + '*' + "{:.6f}".format(float(v_son_fiyat)) + \
-                                       '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(datetime.now()) \
-                                       + '*' + 'Alım_Zaman' + '*' + str(v_alim_zamani)
+                # ***************************************************************************
+            elif float(v_last_price_g) < float(v_hedef_ask_global):
+                # ***************************SATIM*******************************************
+                order_sell = v_client.order_market_sell(symbol=v_symbol, quantity=float(v_alim_miktar))
+                # v_son_fiyat = float(v_last_price_g)
+
+                if order_sell['status'] == 'FILLED':
+                    print('success')
+
+                    p = 0
+                    i = len(order_sell['fills'])
+                    v_total_price = 0
+                    v_quantity_filled = 0
+                    for p in range(i):
+                        v_total_price = v_total_price + float(order_sell['fills'][p]['price']) * float(
+                            order_sell['fills'][p]['qty'])
+                        v_quantity_filled = v_quantity_filled + float(order_sell['fills'][p]['qty'])
+
+                    v_satim_miktar = float(v_quantity_filled)  # float(order_buy['origQty'])
+                    v_satim_fiyati = float(v_total_price) / float(v_quantity_filled)
+                    v_son_fiyat = v_satim_fiyati
+                    quantity_filled = order_sell['fills'][0]['qty']
+
+                    # price = order_sell['fills'][0]['price']
+                    # v_satim_fiyati = float(price)
+                    # v_son_fiyat = v_satim_fiyati
+                    # quantity_filled = order_sell['fills'][0]['qty']
+                    # v_satim_miktar = float(order_sell['origQty'])
+                    v_times = order_sell['transactTime']
+                    v_times = v_times / 1000
+                    dt_v_trantime = datetime.fromtimestamp(float(v_times))
+                    v_satim_zamani = str(dt_v_trantime)  # str(datetime.now())[0:19]
+
+                    if float(v_satim_fiyati) > float(v_alim_fiyati):
+                        v_zarprofit_oran = float(((float(v_satim_fiyati) - v_alim_fiyati) * 100) / v_alim_fiyati)
+                        v_zarprofit_oran = float(v_zarprofit_oran)
+                        v_kisa_mes = 'Karla Sattı..'
+                        v_oran_mesaj = '- Kar Oranı :'
+                        v_sonuc = 'Kar'
+                    else:
+                        v_zarprofit_oran = float(((v_alim_fiyati - float(v_satim_fiyati)) * 100) / v_alim_fiyati)
+                        v_zarprofit_oran = float(v_zarprofit_oran)
+                        v_kisa_mes = 'Zararla Sattı..'
+                        v_oran_mesaj = '- Zarar Oranı :'
+                        v_sonuc = 'Zarar'
+
+                    v_mess1 = v_kisa_mes + ' Hedefi : ' + "{:.8f}".format(
+                        float(v_hedef_bid_global)) + '- Sembol :' + str(
+                        v_symbol) + \
+                              '- Alım Fiyatı :' + "{:.8f}".format(
+                        float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                              str(v_oran_mesaj) + "{:.8f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
+                        v_satim_zamani) + 'Alım Zamanı : ' + str(v_alim_zamani)
+                    # print(v_mess1)
+                    v_karzarar_mesaj = str(v_symbol) + '*' + str(v_sonuc) + '*' + "{:.8f}".format(
+                        float(v_alim_fiyati)) + '*' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                                       '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(v_satim_zamani)
 
                     Telebot_v1.mainma(v_mess1)
                     Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
                     v_alim_var = 0
                     Telebot_v1.genel_alimlar(v_symbol, 'S')
                     # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
-                # ---------------------------
-                time.sleep(60)
+                else:
+                    v_hata = 'SATIM işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
+                    Telebot_v1.mainma(v_hata)
+            elif v_satim_timestamp >= v_alim_timestamp:
+                # ***************************SATIM*******************************************
+                order_sell = v_client.order_market_sell(symbol=v_symbol, quantity=float(v_alim_miktar))
+                # v_son_fiyat = float(v_last_price_g)
+
+                if order_sell['status'] == 'FILLED':
+                    print('success')
+
+                    p = 0
+                    i = len(order_sell['fills'])
+                    v_total_price = 0
+                    v_quantity_filled = 0
+                    for p in range(i):
+                        v_total_price = v_total_price + float(order_sell['fills'][p]['price']) * float(
+                            order_sell['fills'][p]['qty'])
+                        v_quantity_filled = v_quantity_filled + float(order_sell['fills'][p]['qty'])
+
+                    v_satim_miktar = float(v_quantity_filled)  # float(order_buy['origQty'])
+                    v_satim_fiyati = float(v_total_price) / float(v_quantity_filled)
+                    v_son_fiyat = v_satim_fiyati
+                    quantity_filled = order_sell['fills'][0]['qty']
+
+                    # price = order_sell['fills'][0]['price']
+                    # v_satim_fiyati = float(price)
+                    # v_son_fiyat = v_satim_fiyati
+                    # quantity_filled = order_sell['fills'][0]['qty']
+                    # v_satim_miktar = float(order_sell['origQty'])
+
+                    v_times = order_sell['transactTime']
+                    v_times = v_times / 1000
+                    dt_v_trantime = datetime.fromtimestamp(float(v_times))
+                    v_satim_zamani = str(dt_v_trantime)  # str(datetime.now())[0:19]
+
+                    # 1 dk yı geçtiği için satacak
+                    if float(v_satim_fiyati) > float(v_alim_fiyati):
+                        vm_karzar = 'KARLA KAPADI - '
+                        v_profit_oran = float(((float(v_satim_fiyati) - v_alim_fiyati) * 100) / v_alim_fiyati)
+
+                        v_mess1 = vm_karzar + '...Hedefi : ' + "{:.8f}".format(
+                            float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
+                                  '- Alım Fiyatı :' + "{:.8f}".format(
+                            float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                                  '- Kar Oranı :' + "{:.8f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(
+                            v_satim_zamani) + 'Alım Zamanı : ' + str(v_alim_zamani)
+                        v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.8f}".format(
+                            float(v_alim_fiyati)) + '*' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                                           '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(v_satim_zamani)
+                        # print(v_mess1)
+                        # ******************
+                        Telebot_v1.mainma(v_mess1)
+                        Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
+                        v_alim_var = 0
+                        Telebot_v1.genel_alimlar(v_symbol, 'S')
+                        # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
+                    elif float(v_alim_fiyati) >= float(v_satim_fiyati):
+                        vm_karzar = 'ZARARLA KAPADI - '
+                        v_zarprofit_oran = float(((v_alim_fiyati - float(v_satim_fiyati)) * 100) / v_alim_fiyati)
+                        v_zarprofit_oran = float(v_zarprofit_oran)
+
+                        v_mess1 = vm_karzar + '..Hedefi : ' + "{:.8f}".format(
+                            float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
+                                  '- Alım Fiyatı :' + "{:.8f}".format(
+                            float(v_alim_fiyati)) + ' - Satım Fiyatı : ' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                                  '- Zarar Oranı :' + "{:.8f}".format(float(v_zarprofit_oran)) + ' - Zaman : ' + str(
+                            v_satim_zamani) + 'Alım Zamanı : ' + str(v_alim_zamani)
+                        # print(v_mess1)
+                        v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.8f}".format(
+                            float(v_alim_fiyati)) + '*' + "{:.8f}".format(float(v_satim_fiyati)) + \
+                                           '*' + "{:.3f}".format(float(v_zarprofit_oran)) + '*' + str(v_satim_zamani)
+
+                        Telebot_v1.mainma(v_mess1)
+                        Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj)
+                        v_alim_var = 0
+                        Telebot_v1.genel_alimlar(v_symbol, 'S')
+                        # Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
+                else:
+                    v_hata = 'SATIM işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
+                    Telebot_v1.mainma(v_hata)
             else:
                 print('İçerde alım var ama henüz satılamadı...!- ', str(datetime.now())[0:19], v_symbol, ' - Hedefi = ',
-                      str(v_hedef_bid_global), 'Son Fiyat = ', str(v_son_fiyat))
-
+                      str(v_hedef_bid_global), 'Son Fiyat = ', str(v_last_price_g))
         except Exception as exp:
             v_hata_mesaj = 'Hata Oluştu!!..Satım tarafı  = ' + str(exp)
             Telebot_v1.mainma(v_hata_mesaj)
@@ -486,8 +582,8 @@ def socket_front(v_symbol, v_inter):
 
 
 def dosyalari_temizle():
-    open("Alinanlar.txt", 'w').close()
-    open("Satilanlar.txt", 'w').close()
+    open("../DOSYALAR/Alinanlar.txt", 'w').close()
+    open("../DOSYALAR/Satilanlar.txt", 'w').close()
 
 
 def dosya_aktar():
@@ -498,19 +594,19 @@ def dosya_aktar():
     DB_transactions3.con.commit()
 
     v_dosya_coin = []
-    with open('Sembol3.txt', 'r') as dosya:
+    with open('../DOSYALAR/Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_symbol = line
-            # v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
-            #
-            # v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
-            # v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
-            # v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
+            #v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_son_fiyat = check_change(v_symbol, '1m', 500)
 
-            # if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
-            if 1==1 : #v_3m_c > 0 and v_ema_arti_3m == 1:
-                if i <= 18:
+            v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on, v_ema_arti_3m_on, \
+            v_ema_arti_3m, v_3m_sonfiyat, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, v_1m_c, \
+            v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p = check_exist(v_symbol, '1m', 500, v_client)
+
+            #if adx_arti == 1 and stoc_arti==1 and v_3m_c>0 and v_15m_c>0 and v_60m_c> 0:
+            if 1==1: #v_3m_c>0 and v_ema_arti_3m==1:
+                if i <= 13:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, datetime.now())
                 else:
@@ -521,7 +617,7 @@ def dosya_aktar():
     dosya.close()
     print('Dosya Tamamlandı', v_dosya_coin)
 
-    with open('sabikalilar.txt', 'r') as dosya_sabika:
+    with open('../DOSYALAR/sabikalilar.txt', 'r') as dosya_sabika:
         i = 0
         for line in dosya_sabika.read().splitlines():
             if (line in v_dosya_coin):
@@ -635,26 +731,23 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar):
                     v_on_zaman = v_zaman
 
                 if v_alim_var == 1:
-
+                    time.sleep(0.01)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price,
                                      v_islem_tutar)
-                    time.sleep(9.66)
             else:
                 if v_alim_var == 0:
                     v_genel_orderbook = orderbook  # get_snapshot(v_sembol_g, v_limit_g)
-
+                    time.sleep(0.01)
                     if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) and len(v_genel_orderbook["asks"]):
                         print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',
                               len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]),
                               datetime.now())
                         whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price,
                                          v_islem_tutar)
-                        time.sleep(9.66)
                 else:
-
+                    time.sleep(0.01)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_genel_orderbook, v_open_price,
                                      v_islem_tutar)
-                    time.sleep(9.66)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + str(v_sembol_g) + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj)
@@ -662,16 +755,16 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar):
 
 def icerdeki_alinan():
     # print(len(open("Sonuc.txt", "r").readlines()))
-    genel_satimlar = len(open("Satilanlar.txt", "r").readlines())
-    genel_alimlar = len(open("Alinanlar.txt", "r").readlines())
+    genel_satimlar = len(open("../DOSYALAR/Satilanlar.txt", "r").readlines())
+    genel_alimlar = len(open("../DOSYALAR/Alinanlar.txt", "r").readlines())
     v_icerde = int(genel_alimlar) - int(genel_satimlar)
     return v_icerde
 
 
 def alinan_satilan_esitmi():
     # print(len(open("Sonuc.txt", "r").readlines()))
-    genel_satimlar = len(open("Satilanlar.txt", "r").readlines())
-    genel_alimlar = len(open("Alinanlar.txt", "r").readlines())
+    genel_satimlar = len(open("../DOSYALAR/Satilanlar.txt", "r").readlines())
+    genel_alimlar = len(open("../DOSYALAR/Alinanlar.txt", "r").readlines())
     if genel_satimlar == genel_alimlar:
         return 1
     else:
@@ -768,7 +861,6 @@ def check_exist(v_symbol, v_interval, v_limit, v_cli):
                 stoc_arti = 1
             else:
                 stoc_arti = 0
-
         # *********************************    ADX
         # plus di ve minus di değerleri bir önceki çubuğun değerlerini alıyor.Güncellemeyi yeni 1 dk başladıktan sonra yapıyor !!!!!!!!!!!!!!!!!!!!!!!1
         adx = ta.ADX(high_finished, low_finished, close_finished, timeperiod=14)
@@ -822,173 +914,6 @@ def check_exist(v_symbol, v_interval, v_limit, v_cli):
         return ema_cross_upk, ema_cross_downk, ema_cross_up, ema_cross_down, ema_arti, ema_artik, \
                v_last_closing_price, adx_cross_up, adx_cross_down, adx_arti, stoc_arti, \
                v_1m_c, v_3m_c, v_5m_c, v_15m_c, v_60m_c, v_l_c_p
-
-
-def check_exist_ema(v_symbol, v_interval, v_limit, v_cli):
-    global v_ema_cross_up3m, v_ema_cross_down3m,v_ema_cross_up3m_on,\
-        v_ema_cross_down3m_on,v_adx_arti,v_adx_cross_up
-    klines = v_cli.get_klines(symbol=v_symbol, interval=v_interval, limit=v_limit)
-    close = [float(entry[4]) for entry in klines]
-    high = [float(entry[2]) for entry in klines]
-    low = [float(entry[3]) for entry in klines]
-
-    v_ema_cross_up3m, v_ema_cross_down3m, v_ema_cross_up3m_on, v_ema_cross_down3m_on,v_adx_cross_up = 0,0,0,0,0
-
-    v_uz = len(close)
-    v_len = len(close)
-    v_l_c_p = close[-1]
-
-    if v_uz < 2:
-        print('Oluşmamış Değer var. T3', str(v_symbol), str(v_interval))
-        return 0
-    else:
-        v_last_closing_price = close[-1]
-        v_previous_closing_price = close[-2]
-        close_array = np.asarray(close)
-        close_finished = close_array[:-1]
-        high_array = np.asarray(high)
-        high_finished = high_array[:-1]
-        low_array = np.asarray(low)
-        low_finished = low_array[:-1]
-
-        # ******************    EMA -Eski usul kapanmış
-        ema5k = ta.EMA(close_finished, 5)
-        ema20k = ta.EMA(close_finished, 20)
-        last_ema5k = ema5k[-1]
-        last_ema20k = ema20k[-1]
-        previous_ema5k = ema5k[-2]
-        previous_ema20k = ema20k[-2]
-
-        if previous_ema20k > previous_ema5k and last_ema5k > last_ema20k:
-            v_ema_cross_up3m =1
-            # v_hata_mesaj = 'EMA-UP Last-Prev=' +'-'+ str(v_symbol) +'-'+ str(last_ema5k)+'-'+str(last_ema20k)+'-'+ \
-            #                 str(previous_ema20k)+'-'+str(previous_ema5k)+'-'+ str(datetime.now())
-            # Telebot_v1.mainma(v_hata_mesaj)
-        if  previous_ema20k < previous_ema5k and last_ema5k < last_ema20k:
-            v_ema_cross_down3m =1
-            # v_hata_mesaj = 'EMA Down Last-Prev=' +'-'+ str(v_symbol) +'-'+ str(last_ema5k) + '-' + str(last_ema20k) + '-' + \
-            #                 str(previous_ema20k) + '-' + str(previous_ema5k) +'-'+str(datetime.now())
-            # Telebot_v1.mainma(v_hata_mesaj)
-
-        if last_ema20k >= last_ema5k:
-            ema_artik = 0
-        else:
-            ema_artik = 1
-
-        # ***************EMA -Burada nan değerler vardı. Satarken Online EMA
-        ema5 = ta.EMA(close_array, 5)
-        ema20 = ta.EMA(close_array, 20)
-        ema5 = ema5[~np.isnan(ema5)]
-        ema20 = ema20[~np.isnan(ema20)]
-        last_ema5 = ema5[-1]
-        last_ema20 = ema20[-1]
-        previous_ema5 = ema5[-2]
-        previous_ema20 = ema20[-2]
-
-        if previous_ema20 > previous_ema5 and last_ema5 > last_ema20:
-            v_ema_cross_up3m_on =1
-        if   previous_ema20 < previous_ema5 and last_ema5 < last_ema20:
-            v_ema_cross_down3m_on =1
-
-        if last_ema20 >= last_ema5:
-            ema_arti = 0
-        else:
-            ema_arti = 1
-
-        # *********************************    ADX
-        # plus di ve minus di değerleri bir önceki çubuğun değerlerini alıyor.Güncellemeyi yeni 1 dk başladıktan sonra yapıyor !!!!!!!!!!!!!!!!!!!!!!!1
-        adx = ta.ADX(high_finished, low_finished, close_finished, timeperiod=14)
-        plus_di = ta.PLUS_DI(high_finished, low_finished, close_finished, timeperiod=14)
-        minus_di = ta.MINUS_DI(high_finished, low_finished, close_finished, timeperiod=14)
-        # last_adx = adx[-1]
-        last_plus_di = plus_di[-1]
-        last_minus_di = minus_di[-1]
-        previous_plus_di = plus_di[-2]
-        previous_minus_di = minus_di[-2]
-        #v_adx_cross_up = previous_plus_di < previous_minus_di and last_minus_di < last_plus_di
-        if previous_plus_di < previous_minus_di and last_minus_di < last_plus_di :
-           v_adx_cross_up = 1
-
-           if v_ema_cross_up3m == 1:
-               v_hata_mesaj = 'EMA-UP Last-Prev=' + '-' + str(v_symbol) + '-' + str(last_ema5k) + '-' + str(last_ema20k) + '-' + \
-                                   str(previous_ema20k)+'-'+str(previous_ema5k)+'-'+ str(datetime.now())
-               Telebot_v1.mainma(v_hata_mesaj)
-
-        if last_plus_di >= last_minus_di:
-            v_adx_arti = 1
-        else:
-            v_adx_arti = 0
-        adx_cross_down = previous_plus_di > previous_minus_di and last_minus_di > last_plus_di
-
-    return v_ema_cross_up3m, ema_artik,v_adx_cross_up, v_adx_arti
-
-def check_exist_ema_sat(v_symbol, v_interval, v_limit, v_cli):
-    global v_ema_cross_up3m_s, v_ema_cross_down3m_s,v_ema_cross_up3m_on_s, v_ema_cross_down3m_on_s
-    klines = v_cli.get_klines(symbol=v_symbol, interval=v_interval, limit=v_limit)
-    close = [float(entry[4]) for entry in klines]
-    high = [float(entry[2]) for entry in klines]
-    low = [float(entry[3]) for entry in klines]
-
-    v_uz = len(close)
-    v_len = len(close)
-    v_l_c_p = close[-1]
-
-    v_ema_cross_up3m_s, v_ema_cross_down3m_s, v_ema_cross_up3m_on_s, v_ema_cross_down3m_on_s = 0,0,0,0
-    if v_uz < 2:
-        print('Oluşmamış Değer var. T3', str(v_symbol), str(v_interval))
-        return 0
-    else:
-        v_last_closing_price = close[-1]
-        v_previous_closing_price = close[-2]
-        close_array = np.asarray(close)
-        close_finished = close_array[:-1]
-        high_array = np.asarray(high)
-        high_finished = high_array[:-1]
-        low_array = np.asarray(low)
-        low_finished = low_array[:-1]
-
-        # ******************    EMA -Eski usul kapanmış
-        ema5k = ta.EMA(close_finished, 5)
-        ema20k = ta.EMA(close_finished, 10)
-        last_ema5k = ema5k[-1]
-        last_ema20k = ema20k[-1]
-        previous_ema5k = ema5k[-2]
-        previous_ema20k = ema20k[-2]
-
-        if previous_ema20k > previous_ema5k and last_ema5k > last_ema20k:
-            v_ema_cross_up3m_s =1
-        if  previous_ema20k < previous_ema5k and last_ema5k < last_ema20k:
-            v_ema_cross_down3m_s =1
-            v_hata_mesaj = 'EMA Down Last-Prev=' + str(v_symbol) +'-' +  str(last_ema5k) + '-' + str(last_ema20k) + '-' + \
-                           str(previous_ema20k) + '-' + str(previous_ema5k) +'-' +  str(datetime.now())
-            Telebot_v1.mainma(v_hata_mesaj)
-
-        if last_ema20k >= last_ema5k:
-            ema_artik = 0
-        else:
-            ema_artik = 1
-
-        # ***************EMA -Burada nan değerler vardı. Satarken Online EMA
-        ema5 = ta.EMA(close_array, 5)
-        ema20 = ta.EMA(close_array, 20)
-        ema5 = ema5[~np.isnan(ema5)]
-        ema20 = ema20[~np.isnan(ema20)]
-        last_ema5 = ema5[-1]
-        last_ema20 = ema20[-1]
-        previous_ema5 = ema5[-2]
-        previous_ema20 = ema20[-2]
-
-        if previous_ema20 > previous_ema5 and last_ema5 > last_ema20:
-            v_ema_cross_up3m_on_s =1
-        if   previous_ema20 < previous_ema5 and last_ema5 < last_ema20:
-            v_ema_cross_down3m_on_s =1
-
-        if last_ema20 >= last_ema5:
-            ema_arti = 0
-        else:
-            ema_arti = 1
-
-        #return ema_cross_upk, ema_cross_downk
 
 
 # ************************

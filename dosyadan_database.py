@@ -8,7 +8,7 @@ cursor = con.cursor()
 #WANUSDT*Zarar*0.149100*0.148600*0.335*2022-11-26 22:36:51
 
 def dosyadan_db():
-    with open('Sonuc.txt', 'r') as dosya:
+    with open('DOSYALAR/Sonuc.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             aciklama = line
@@ -65,7 +65,7 @@ def kz_hesapla(): #, v
         con.commit()
         print('Sonuç = ', v_bak)
 def satirs():
-    print(len(open("Sonuc.txt", "r").readlines()))
+    print(len(open("DOSYALAR/Sonuc.txt", "r").readlines()))
     print(len(open("OLD/ws_4_con4.py", "r").readlines()))
 
 if __name__ == '__main__':

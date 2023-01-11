@@ -35,7 +35,7 @@ import concurrent.futures
 # ssl den doğacak hataları bertaraf etmek için
 requests.packages.urllib3.disable_warnings()
 
-DB_FILE = "TRADE3.DB"
+DB_FILE = "../TRADE3.DB"
 con = sqlite3.connect(DB_FILE, timeout=10)
 cursor = con.cursor()
 
@@ -725,8 +725,8 @@ def socket_front(v_symbol, v_inter):
 
 # ***********************************************************************************************************************
 def dosyalari_temizle():
-    open("Alinanlar.txt", 'w').close()
-    open("Satilanlar.txt", 'w').close()
+    open("../DOSYALAR/Alinanlar.txt", 'w').close()
+    open("../DOSYALAR/Satilanlar.txt", 'w').close()
 
 
 # ***********************************************************************************************************************
@@ -739,7 +739,7 @@ def dosya_aktar():
     DB_transactions3.con.commit()
 
     v_dosya_coin = []
-    with open('Sembol3.txt', 'r') as dosya:
+    with open('../DOSYALAR/Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_symbol = line
@@ -762,7 +762,7 @@ def dosya_aktar():
     print('Dosya Tamamlandı', v_dosya_coin)
 
     # ***************Temizlik***********************
-    with open('sabikalilar.txt', 'r') as dosya_sabika:
+    with open('../DOSYALAR/sabikalilar.txt', 'r') as dosya_sabika:
         i = 0
         for line in dosya_sabika.read().splitlines():
             if (line in v_dosya_coin):
@@ -856,8 +856,8 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
 # ***********************************************************************************************************************
 def icerdeki_alinan():
     # print(len(open("Sonuc.txt", "r").readlines()))
-    genel_satimlar = len(open("Satilanlar.txt", "r").readlines())
-    genel_alimlar = len(open("Alinanlar.txt", "r").readlines())
+    genel_satimlar = len(open("../DOSYALAR/Satilanlar.txt", "r").readlines())
+    genel_alimlar = len(open("../DOSYALAR/Alinanlar.txt", "r").readlines())
     v_icerde = int(genel_alimlar) - int(genel_satimlar)
     return v_icerde
 
@@ -865,8 +865,8 @@ def icerdeki_alinan():
 # ***********************************************************************************************************************
 def alinan_satilan_esitmi():
     # print(len(open("Sonuc.txt", "r").readlines()))
-    genel_satimlar = len(open("Satilanlar.txt", "r").readlines())
-    genel_alimlar = len(open("Alinanlar.txt", "r").readlines())
+    genel_satimlar = len(open("../DOSYALAR/Satilanlar.txt", "r").readlines())
+    genel_alimlar = len(open("../DOSYALAR/Alinanlar.txt", "r").readlines())
     if genel_satimlar == genel_alimlar:
         return 1
     else:

@@ -268,7 +268,7 @@ def run_frontdata(v_sem, v_int):
 def dosya_aktar():
     global v_dosya_coin
     v_dosya_coin = []
-    with open('../Sembol3.txt', 'r') as dosya:
+    with open('../DOSYALAR/Sembol3.txt', 'r') as dosya:
         i = 0
         for line in dosya.read().splitlines():
             v_dosya_coin.append(line)
