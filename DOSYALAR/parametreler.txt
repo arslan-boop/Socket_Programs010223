@@ -4,13 +4,13 @@ v_in_g*1000ms
 v_islem_tutar*20
 v_mod*S
 v_test_prod*T
-v_ziplama_oran*0.2
-v_mum_sayisi*5
-v_dalga_oran*4
+v_ziplama_oran*0.4
+v_mum_sayisi*20
+v_dalga_oran*3
 v_bakiye*300
 v_volume_fark_oran*0.03
 v_oran*0.03
-v_kar_oran*1.006
+v_kar_oran*1.008
 v_zarar_oran*0.996
 minVolumePerc*0.01
 program_tip*1

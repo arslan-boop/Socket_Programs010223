@@ -1,6 +1,5 @@
 import multiprocessing
 import warnings
-
 import numpy
 from binance.exceptions import BinanceAPIException
 
@@ -36,12 +35,12 @@ import concurrent.futures
 requests.packages.urllib3.disable_warnings()
 
 v_hedef_bid_global, v_hedef_ask_global, v_alim_var, v_alim_fiyati, v_alim_miktar, v_kesim, v_ters_kesim, v_hizli_gonzales = 0, 0, 0, 0, 0, 0, 0, 0
-v_last_price_g, v_alim_zamani, v_alim_timestamp, v_open_price, genel_alimlar, genel_satimlar, orderbook = 0, '', 0, 0, [], [], {}
+v_last_price_g, v_alim_zamani, v_alim_timestamp, v_alim_orjtimestamp, v_open_price, genel_alimlar, genel_satimlar, orderbook = 0, '', 0, 0, 0, [], [], {}
 v_client = Client_1(API_Config.API_KEY, API_Config.API_SECRET)
 v_last_update, updates, v_time_before, v_time, v_time_before_dk, v_time_dk, v_zipla = '2022', 0, '', '', '', '', 0
 closes, highes, lowes, kesmeler, openes = [], [], [], [], []
 v_dosya_alinan, v_dosya_satilan, v_dosya_sembol, v_dosya_sabika, \
-v_dosya_parametre, v_dosya_acilsat, v_dosya_genelbuy, v_dosya_sonuc = '', '', '', '', '', '', '', ''
+v_dosya_parametre, v_dosya_acilsat, v_dosya_genelbuy, v_dosya_sonuc, v_dosya_islenen = '', '', '', '', '', '', '', '', ''
 
 
 def floor_step_size(quantity, stepSize):
@@ -66,7 +65,7 @@ def get_round_step_quantity(v_symbol, qty):
 def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_bakiye,
                      v_program_tip, v_sabika_sure):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati, v_last_price_g, v_alim_miktar
-    global v_client, v_alim_timestamp, v_alim_zamani, v_hizli_gonzales, v_ters_kesim
+    global v_client, v_alim_timestamp, v_alim_zamani, v_hizli_gonzales, v_ters_kesim, v_alim_orjtimestamp
 
     if v_alim_var == 0:
         try:
@@ -74,14 +73,20 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
             if v_hizli_gonzales == 1:  # Alım yap denmiş demektir.
                 if v_test_prod == 'P':
                     v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, \
-                    v_alim_miktar, v_alim_fiyati, v_alim_zamani = buy_coin(v_symbol, v_islem_tutar, v_kar_oran,
-                                                                           v_zarar_oran, v_zip, v_bakiye, v_program_tip,
-                                                                           v_sabika_sure)
+                    v_alim_miktar, v_alim_fiyati, v_alim_zamani, v_alim_orjtimestamp = buy_coin(v_symbol, v_islem_tutar,
+                                                                                                v_kar_oran,
+                                                                                                v_zarar_oran, v_zip,
+                                                                                                v_bakiye, v_program_tip,
+                                                                                                v_sabika_sure)
                 else:
                     v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, \
-                    v_alim_miktar, v_alim_fiyati, v_alim_zamani = buy_coin_test(v_symbol, v_islem_tutar, v_kar_oran,
-                                                                                v_zarar_oran, v_zip, v_bakiye,
-                                                                                v_program_tip, v_sabika_sure)
+                    v_alim_miktar, v_alim_fiyati, v_alim_zamani, v_alim_orjtimestamp = buy_coin_test(v_symbol,
+                                                                                                     v_islem_tutar,
+                                                                                                     v_kar_oran,
+                                                                                                     v_zarar_oran,
+                                                                                                     v_zip, v_bakiye,
+                                                                                                     v_program_tip,
+                                                                                                     v_sabika_sure)
 
                 v_alim_var = 1
                 v_hizli_gonzales = 0
@@ -90,7 +95,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                 print('Alım için Uygun Emir Bulunamadı.!', v_symbol, datetime.now())
         except Exception as exp:
             v_hata_mesaj = 'Hata Oluştu!!..Alım tarafı  = ' + str(exp) + '-' + str(v_symbol) + '-' + str(datetime.now())
-            Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+            Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
     elif v_alim_var == 1:
         current_timestamp = round(time.time() * 1000)
@@ -174,7 +179,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
         except Exception as exp:
             v_hata_mesaj = 'Hata Oluştu!!..Satım tarafı  = ' + str(exp) + '-' + str(v_symbol) + '-' + str(
                 datetime.now())
-            Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+            Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ****************************SATIM********************************
@@ -215,7 +220,8 @@ def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani, v_sa
                 v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.8f}".format(float(v_alim_fiyati)) + '*' + \
                                    "{:.8f}".format(float(v_satim_fiyati)) + \
                                    '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(v_satim_zamani) + '*' + str(
-                    v_alim_zamani)
+                    v_alim_zamani) + '*' + \
+                                   str(v_satim_sebeb)
             else:
                 # ******Zarar edenler cezasını çeksin******
                 Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
@@ -230,7 +236,8 @@ def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani, v_sa
                 v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.8f}".format(
                     float(v_alim_fiyati)) + '*' + "{:.8f}".format(float(v_satim_fiyati)) + \
                                    '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + \
-                                   str(v_satim_zamani) + '*' + str(v_alim_zamani)
+                                   str(v_satim_zamani) + '*' + str(v_alim_zamani) + '*' + \
+                                   str(v_satim_sebeb)
             # ----------------------------------------------------------------
             v_mess1 = 'Program Tipi = ' + str(v_program_tip) + v_kisa_mes + ' Hedefi : ' + "{:.8f}".format(
                 float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
@@ -239,7 +246,7 @@ def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani, v_sa
                       str(v_oran_mesaj) + "{:.8f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(v_satim_zamani) + \
                       'Alım Zamanı : ' + str(v_alim_zamani)
 
-            Telebot_v1.mainma(v_mess1,v_program_tip)
+            Telebot_v1.mainma(v_mess1, v_program_tip)
             Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj, v_dosya_sonuc)
             v_alim_var = 0
             Telebot_v1.genel_alimlar(v_symbol, 'S', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
@@ -247,11 +254,11 @@ def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani, v_sa
 
         else:
             v_hata = 'SATIM işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
-            Telebot_v1.mainma(v_hata,v_program_tip)
+            Telebot_v1.mainma(v_hata, v_program_tip)
     except Exception as exp:
         v_hata_mesaj = 'Satarken  Hata Oluştu!!.sell_coin  = ' + str(exp) + '-' + str(v_symbol) + '-' + str(
             datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ***********************************************************************************************************************
@@ -275,7 +282,8 @@ def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani,
             v_karzarar_mesaj = str(v_symbol) + '*' + 'Kar' + '*' + "{:.8f}".format(float(v_alim_fiyati)) + '*' + \
                                "{:.8f}".format(float(v_satim_fiyati)) + \
                                '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(v_satim_zamani) + '*' + str(
-                v_alim_zamani)
+                v_alim_zamani) + '*' + \
+                               str(v_satim_sebeb)
         else:
             # ******Zarar edenler cezasını çeksin******
             Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
@@ -290,7 +298,8 @@ def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani,
             v_karzarar_mesaj = str(v_symbol) + '*' + 'Zarar' + '*' + "{:.8f}".format(
                 float(v_alim_fiyati)) + '*' + "{:.8f}".format(float(v_satim_fiyati)) + \
                                '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + \
-                               str(v_satim_zamani) + '*' + str(v_alim_zamani)
+                               str(v_satim_zamani) + '*' + str(v_alim_zamani) + '*' + \
+                               str(v_satim_sebeb)
 
         v_mess1 = 'Program Tipi = ' + str(v_program_tip) + v_kisa_mes + ' Hedefi : ' + "{:.8f}".format(
             float(v_hedef_bid_global)) + '- Sembol :' + str(v_symbol) + \
@@ -299,14 +308,14 @@ def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani,
                   str(v_oran_mesaj) + "{:.8f}".format(float(v_profit_oran)) + ' - Zaman : ' + str(v_satim_zamani) + \
                   'Alım Zamanı : ' + str(v_alim_zamani)
 
-        Telebot_v1.mainma(v_mess1,v_program_tip)
+        Telebot_v1.mainma(v_mess1, v_program_tip)
         Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj, v_dosya_sonuc)
         v_alim_var = 0
         Telebot_v1.genel_alimlar(v_symbol, 'S', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
         Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
     except Exception as exp:
         v_hata_mesaj = 'Satarken  Hata Oluştu!!.11   = ' + str(exp) + '-' + str(v_symbol) + '-' + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ***********************************************************************************************************************
@@ -346,11 +355,13 @@ def buy_coin(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_bakiye,
             v_hedef_ask_global = v_hedef_ask
 
             current_timestamp = round(time.time() * 1000)
-            v_alim_timestamp = (current_timestamp + (480000)) / 1000
+            v_alim_timestamp = (current_timestamp + (700000)) / 1000
+            v_alim_orjtimestamp = (current_timestamp) / 1000
+
             # v_alim_zamani = str(datetime.now())[0:19]
         else:
             v_hata = 'Alım işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
-            Telebot_v1.mainma(v_hata,v_program_tip)
+            Telebot_v1.mainma(v_hata, v_program_tip)
 
         v_mess = 'Program Tipi = ' + str(v_program_tip) + str(
             v_symbol) + '--' + '*Tuttum Seni* HEDEF == ' + '--' + "{:.8f}".format(float(v_hedef_bid)) + \
@@ -360,19 +371,19 @@ def buy_coin(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_bakiye,
                  'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar)) + '--' + \
                  'Zip=' + '--' + str(v_zip)
         # Telegram mesajo
-        Telebot_v1.mainma(v_mess,v_program_tip)
+        Telebot_v1.mainma(v_mess, v_program_tip)
         Telebot_v1.genel_alimlar(v_symbol, 'A', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
         v_sembolmik = v_symbol.replace("BUSD", "")
         v_alim_miktar = v_client.get_asset_balance(asset=v_sembolmik).get('free')
         v_alim_miktar = get_round_step_quantity(v_symbol, float(v_alim_miktar))
 
         return v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, \
-               v_alim_timestamp, v_alim_miktar, v_alim_fiyati, v_alim_zamani
+               v_alim_timestamp, v_alim_miktar, v_alim_fiyati, v_alim_zamani, v_alim_orjtimestamp
 
     except Exception as exp:
         v_hata_mesaj = 'Alırken  Hata Oluştu!!.. buy_coin   = ' + str(exp) + '-' + str(v_symbol) + '-' + str(
             datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ************************************************************ ************************TEST ALIM**********************/
@@ -389,7 +400,8 @@ def buy_coin_test(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_ba
         v_hedef_bid_global = v_hedef_bid
         v_hedef_ask_global = v_hedef_ask
         current_timestamp = round(time.time() * 1000)
-        v_alim_timestamp = (current_timestamp + (480000)) / 1000
+        v_alim_timestamp = (current_timestamp + (700000)) / 1000
+        v_alim_orjtimestamp = (current_timestamp) / 1000
         # v_alim_var = 1
 
         v_mess = 'Program Tipi = ' + str(v_program_tip) + str(
@@ -399,15 +411,15 @@ def buy_coin_test(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_ba
                  'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar)) + '--' + \
                  'Zip=' + '--' + str(v_zip)
         # Telegram mesajo
-        Telebot_v1.mainma(v_mess,v_program_tip)
+        Telebot_v1.mainma(v_mess, v_program_tip)
         Telebot_v1.genel_alimlar(v_symbol, 'A', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
 
         return v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, \
-               v_alim_timestamp, v_alim_miktar, v_alim_fiyati, v_alim_zamani
+               v_alim_timestamp, v_alim_miktar, v_alim_fiyati, v_alim_zamani, v_alim_orjtimestamp
     except Exception as exp:
         v_hata_mesaj = 'Satarken  Hata Oluştu!!.. buy_coin_test    = ' + str(exp) + '-' + str(v_symbol) + '-' + str(
             datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ***********************************************************************************************************************
@@ -428,12 +440,37 @@ def on_close_f(ws_front):
     print('closed connection')
 
 
+def get_seconds_to_close(interval):
+    candle = 1  # get_values_of_current_candle("BTC",interval)
+    ## Here u should use your own method to get the values of the last/current candle (coin doesnt matter here)
+    timestamp = candle["time"]  ## We use the current candle to get the timestamp aka. opening time of the candle
+    if interval == "1m":
+        seconds = 60
+    elif interval == "5m":
+        seconds = 300
+    elif interval == "1h":
+        seconds = 3600
+    elif interval == "4h":
+        seconds = 14400
+    elif interval == "1d":
+        seconds = 24 * 3600
+    else:
+        print("Interval error!")
+        quit()
+
+    current_time = time.time()
+    needed_timestamp = timestamp + seconds
+    seconds_left = needed_timestamp - current_time
+    return seconds_left
+
+
 # ***********************************************************************************************************************
 def on_message_f(ws_front, message):
     global v_last_price_g, v_open_price, closes, highes, lowes, openes, v_kesim, \
         v_ters_kesim, v_alim_var, v_hizli_gonzales, v_ziplama_oran, kesmeler, \
-        v_alim_zamani, v_mum_sayisi, v_dalga_oran,genel_program_tipi
+        v_alim_zamani, v_mum_sayisi, v_dalga_oran, genel_program_tipi, v_alim_orjtimestamp
     # v_l_c_p, v_p_c_p2, v_1m_c, v_p_c_p3, v_3m_c, v_p_c_p5, v_5m_c = 0, 0, 0, 0, 0, 0, 0
+    v_ayni_mum_icinde = 0
 
     json_message = json.loads(message)
     # print('Gelen mesaj: ', json_message)
@@ -444,12 +481,22 @@ def on_message_f(ws_front, message):
     high = float(candle['h'])
     low = float(candle['l'])
     v_symbol = candle['s']
-    # print('closes dizisi ik', v_symbol, closes, datetime.now())
-    # print('Geldi', v_symbol, close, '-', open, '-', high, '-', low, '-', datetime.now())
     is_candle_closed = candle['x']
 
+    # ****************Mum kapanış zamanı bilgileri
+    candle_start_time = candle['t']
+    candle_close_time = candle['T']
+    candle_start_time = candle_start_time / 1000
+    candle_close_time = candle_close_time / 1000
+    dt_c_start = datetime.fromtimestamp(float(candle_start_time))
+    dt_c_close = datetime.fromtimestamp(float(candle_close_time))
+
+    # print('Closes', closes[-1],closes[-2],closes[-3],datetime.now())
+    # print('closes dizisi ik', v_symbol, dt_c_start,dt_c_close, datetime.now())
+    # print('Geldi', v_symbol, close, '-', open, '-', high, '-', low, '-', datetime.now())
+
     x = ((float(close) - float(open)) / float(open)) * 100
-    if x >= v_ziplama_oran:
+    if float(x) >= float(v_ziplama_oran):
         # v_m = str(v_symbol) + '*' + 'Acil_Al..Oran' + '*' + "{:.2f}".format(float(x)) + '*' + str(datetime.now())
         # Telebot_v1.analiz_islem_log(v_m, v_symbol)
         v_acil_al = 1
@@ -479,9 +526,15 @@ def on_message_f(ws_front, message):
     v_altime = str(v_alim_zamani)[0:16]
     v_sattime = str(datetime.now())[0:16]
 
-    # Aynı dk içinde satmaya çalışma alındıysa
-    if v_altime != v_sattime:
-        if v_alim_var == 1 and is_candle_closed == False and v_ters_kesim == 0:
+    # *************************Aynı mum içinde satmaya çalışma alındıysa
+    # if v_altime != v_sattime:
+    if int(v_alim_orjtimestamp) > int(candle_start_time) and int(v_alim_orjtimestamp) < int(candle_close_time):
+        v_ayni_mum_icinde = 1
+    else:
+        v_ayni_mum_icinde = 0
+
+    if v_ayni_mum_icinde == 0 and v_alim_var == 1:
+        if is_candle_closed == False and v_ters_kesim == 0:
             candle_acil_satim(v_symbol, open, close, high, low, closes, highes, lowes, openes, v_ziplama_oran,
                               v_dalga_oran)
             # v_m = str(v_symbol) + '*' + 'Acil SAT' + '*' + str(open) + '*' + str(close) + '*' + \
@@ -491,19 +544,20 @@ def on_message_f(ws_front, message):
 
 # *********************************************************************************************
 def candle_acil_satim(v_symbol, open, close, high, low, closes, highes, lowes, openes, v_ziplama_oran, v_dalga_oran):
-    global v_last_price_g, v_open_price, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales,genel_program_tipi
+    global v_last_price_g, v_open_price, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales, genel_program_tipi
     try:
-        time.sleep(2.66)
+        time.sleep(1.22)
         closes.append(close)
         highes.append(high)
         lowes.append(low)
         openes.append(open)
 
+        # 2.mum kırmızıya döndü
         if float(openes[-1]) > float(closes[-1]) and float(openes[-2]) > float(closes[-2]):
             v_ters_kesim = 1
             vm1 = 'Acil Satım Yapılacak...!..  = ' + str(v_symbol) + str(datetime.now()) + '*' + str(float(closes[-1])) \
-                  + '*' + str(openes[-1]) + '*' + str(v_last_price_g)
-            Telebot_v1.mainma(vm1,genel_program_tipi)
+                  + '*' + str(openes[-1]) + '*' + str(openes[-2]) + '*' + str(closes[-2]) + '*' + str(v_last_price_g)
+            Telebot_v1.mainma(vm1, genel_program_tipi)
         else:
             print('İçerde alım var fakat satılamadı  ', v_symbol, datetime.now())
             v_ters_kesim = 0
@@ -515,13 +569,13 @@ def candle_acil_satim(v_symbol, open, close, high, low, closes, highes, lowes, o
 
     except Exception as exp:
         v_hata_mesaj = 'Hata candle_acil_satim!..  = ' + str(exp) + '-' + str(v_symbol) + '-' + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,genel_program_tipi)
+        Telebot_v1.mainma(v_hata_mesaj, genel_program_tipi)
 
 
 # **********************************************************************************************************************
 def candle_islem(v_symbol, kesmeler, open, close, high, low, closes, highes, lowes, openes, v_ziplama_oran,
                  v_mum_sayisi, v_dalga_oran):
-    global v_last_price_g, v_open_price, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales,genel_program_tipi
+    global v_last_price_g, v_open_price, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales, genel_program_tipi
     v_toplam = 0
     try:
         closes.append(close)
@@ -546,18 +600,19 @@ def candle_islem(v_symbol, kesmeler, open, close, high, low, closes, highes, low
                 kesmeler.pop(0)
 
             v_toplam = int(sum(kesmeler))
-            if v_1m_c > v_ziplama_oran and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
+
+            if float(v_1m_c) > float(v_ziplama_oran) and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
                 v_hizli_gonzales = 1
                 v_hata_mesaj = 'Hızlı Artan Var..  = ' + str(v_symbol) + ' Fiyat=' + \
                                str(close) + 'Oran=' + "{:.2f}".format(float(v_1m_c)) + \
                                'Son =' + str(closes[-1]) + 'Prev=' + str(closes[-2]) + 'Zaman=' + str(datetime.now())
-                Telebot_v1.mainma(v_hata_mesaj,genel_program_tipi)
+                Telebot_v1.mainma(v_hata_mesaj, genel_program_tipi)
                 # time.sleep(1)
             else:
                 print('Değişim Anormal Yok= ', v_symbol, datetime.now())
                 v_hizli_gonzales = 0
         else:
-            time.sleep(2.333)
+            time.sleep(1.333)
             if float(openes[-1]) > float(closes[-1]) and float(closes[-1]) > float(v_last_price_g):
                 v_ters_kesim = 1
                 vm1 = 'Çık!..  = ' + str(v_symbol) + str(datetime.now())
@@ -573,13 +628,13 @@ def candle_islem(v_symbol, kesmeler, open, close, high, low, closes, highes, low
             openes.pop(0)
     except Exception as exp:
         v_hata_mesaj = 'Hata candle_islem_acil_alim!..  = ' + str(exp) + '-' + str(v_symbol) + '-' + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,genel_program_tipi)
+        Telebot_v1.mainma(v_hata_mesaj, genel_program_tipi)
 
 
 # *********************************************
 def candle_islem_acil_alim(v_symbol, kesmeler, open, close, high, low, closes, highes, lowes, openes, v_ziplama_oran,
                            v_mum_sayisi, v_dalga_oran):
-    global v_last_price_g, v_open_price, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales,genel_program_tipi
+    global v_last_price_g, v_open_price, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales, genel_program_tipi
     v_toplam = 0
     try:
         # time.sleep(2.333)
@@ -603,12 +658,12 @@ def candle_islem_acil_alim(v_symbol, kesmeler, open, close, high, low, closes, h
 
         v_toplam = int(sum(kesmeler))
 
-        if v_1m_c > v_ziplama_oran and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
+        if float(v_1m_c) > float(v_ziplama_oran) and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
             v_hizli_gonzales = 1
             v_hata_mesaj = 'Acil...Hızlı Artan Var..  = ' + str(v_symbol) + ' Fiyat=' + \
                            str(close) + 'Oran=' + "{:.2f}".format(float(v_1m_c)) + \
                            'Son =' + str(closes[-1]) + 'Prev=' + str(closes[-2]) + 'Zaman=' + str(datetime.now())
-            Telebot_v1.mainma(v_hata_mesaj,genel_program_tipi)
+            Telebot_v1.mainma(v_hata_mesaj, genel_program_tipi)
             # time.sleep(1)
         else:
             print('Acil Alımı Durumu Olışmadı.... ', v_symbol, datetime.now())
@@ -623,26 +678,33 @@ def candle_islem_acil_alim(v_symbol, kesmeler, open, close, high, low, closes, h
 
     except Exception as exp:
         v_hata_mesaj = 'Hata candle_islem_acil_alim!..  = ' + str(exp) + '-' + str(v_symbol) + '-' + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,genel_program_tipi)
+        Telebot_v1.mainma(v_hata_mesaj, genel_program_tipi)
 
 
 # ************************
-def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_dalga_oran, v_ilk_kontrol,v_ziplama_oran):
+def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_dalga_oran, v_ilk_kontrol,
+                       v_ziplama_oran):
     # İşleme girme şartları
     # 1-En yüksek mum olacak , 2-Kendinden önceki x kadar mumum dalgalanması belirtilen oranda olacak
     # 3-Ziplama oranı kadar en yüksek mumdan yüksek olacak , 4-Sabıkasız olacak
-
     global v_dosya_sabika
+    # global mum_ortalama
+    mum_ortalama = []
+
     v_girme = 0
     v_close = closes[-1]
     v_open = openes[-1]
-    v_artim_oran = ((float(v_close) - float(v_open)) / float(v_open)) * 100
 
+    if float(v_close) == float(v_open) :
+        v_artim_oran =0
+    else:
+        v_artim_oran = ((float(v_close) - float(v_open)) / float(v_open)) * 100
+    #-----------
     if len(closes) < int(v_mum_sayisi):
         v_say = len(closes)
     else:
         v_say = int(v_mum_sayisi)
-
+    # -----------
     if v_ilk_kontrol == 1:
         v_min = float(closes[-1])
         v_max = float(closes[-1])
@@ -650,40 +712,87 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
         v_min = float(closes[-2])
         v_max = float(closes[-2])
 
+    # print('mum1', mum_ortalama, len(mum_ortalama)) # closes[-2],closes[-1])
+    # print('ilk-',v_girme, 'Min - Max', v_min, v_max, 'Close/open', v_close, v_open, datetime.now())
+    # *******************************************************
     for i in range(1, v_say):
-        # print(closes[-i-1], v_l_c_p_c)
         if float(closes[-i - 1]) > v_max:
             v_max = float(closes[-i - 1])
         if float(closes[-i - 1]) < v_min:
             v_min = float(closes[-i - 1])
-        # Son mum belirlenen aralıktaki en yüksek mum değilse girme
-        if v_ilk_kontrol != 1:
+
+        #print('mum0001', mum_ortalama, len(mum_ortalama),v_symbol)  # closes[-2],closes[-1])
+        # Mum boylarının ortalama bir değerini bulup zıplamada kullanacağıx
+        if float(closes[-i - 1]) == float(openes[-i - 1]):
+            mum_ortalama.append(0)
+        else:
+            mum_boyu_orani = ((float(closes[-i - 1]) - float(openes[-i - 1])) / float(openes[-i - 1])) * 100
+            if mum_boyu_orani < 0:
+               mum_boyu_orani = float(-1 * float(mum_boyu_orani))
+               mum_ortalama.append(mum_boyu_orani)
+
+        if v_ilk_kontrol == 2:
+            # Son mum belirlenen aralıktaki en yüksek mum değilse girme
             if float(closes[-i - 1]) > float(v_close):
                 v_girme = v_girme + 1
+                break
+    # *******************************************************
+    #print('mum1', mum_ortalama, len(mum_ortalama))  # closes[-2],closes[-1])
+    if float(v_max) == float(v_min) :
+        v_dalgalanma_oran = 0
+    else:
+        v_dalgalanma_oran = ((float(v_max) - float(v_min)) / float(v_min)) * 100
 
-    # En yüksek mum kapanışının üstünde zıplama oran kadar yükselti olsun
-    if v_ilk_kontrol != 1:
-        if float(v_close) - float(v_max) < float(v_ziplama_oran):
-            v_girme = v_girme + 1
-
-    # print('MinMax', v_min, v_max, v_girme)
-    v_dalgalanma_oran = ((float(v_max) - float(v_min)) / float(v_min)) * 100
-
-    # Son mumdan öncekilerde mumlar arası dalgalanma belirlenen orandan büyükse bu yakın zamanda çıkmıştır
-    # veya testre piyasası yine alma
-    if float(v_dalgalanma_oran) > v_dalga_oran:
-        v_girme = v_girme + 1
-
-     # ceza süresi dolmayan sabıkalı coinleri alma
-    with open(v_dosya_sabika, 'r') as dosya_sabika:
-        for line in dosya_sabika.read().splitlines():
-            aciklama = line
-            s = aciklama.split("*")
-            current_timestamp = round(time.time() * 1000)
-            v_current_timestamp = (current_timestamp) / 1000
-            v_current_timestamp = int(v_current_timestamp)
-            if str(s[0]) == v_symbol and float(v_current_timestamp) < float(s[1]):
+    if v_girme == 0:
+        if v_ilk_kontrol == 2:
+            # Son mumdan öncekilerde mumlar arası dalgalanma belirlenen orandan büyükse bu yakın zamanda çıkmıştır veya testre piyasası yine alma
+            if float(v_dalgalanma_oran) > float(v_dalga_oran):
                 v_girme = v_girme + 1
+
+            # En yüksek mum kapanışının üstünde zıplama oran kadar yükselti olsun
+            if float(v_close) == float(v_max):
+                v_zip_hesap =0
+            else:
+                v_zip_hesap = ((float(v_close) - float(v_max)) / float(v_max)) * 100
+
+            if float(v_zip_hesap) < float(v_ziplama_oran):
+                v_girme = v_girme + 1
+
+            # # Son mum artım oranı ortalama mumun en az 2 katı olsun
+            if len(mum_ortalama) > 0:
+                v_ort_mumboyoran = float(float(sum(mum_ortalama)) / len(mum_ortalama))
+            else:
+                v_ort_mumboyoran = 0
+            # if float(v_artim_oran) < float(v_ort_mumboyoran) * 2:
+            #     v_girme = v_girme + 1
+
+            # Dalga 5 katlı mumdan büyükse girmesin
+            if float(v_ort_mumboyoran)>0 :
+                if float(v_dalgalanma_oran) > float(v_ort_mumboyoran)*4:
+                    v_girme = v_girme + 1
+
+            # print('Anlık mumla bir önceki arasında ziplama varmı-', v_girme, 'Min - Max', v_min, v_max, 'Close/open', v_close, v_open, datetime.now())
+        elif v_ilk_kontrol == 1:
+            # Son mumdan öncekilerde mumlar arası dalgalanma belirlenen orandan büyükse bu yakın zamanda çıkmıştır veya testre piyasası yine alma
+            if float(v_dalgalanma_oran) > float(v_dalga_oran):
+                v_girme = v_girme + 1
+            # # Dalga 5 katlı mumdan büyükse girmesin
+            # v_ort_mumboyoran = float(float(sum(mum_ortalama)) / len(mum_ortalama))
+            # if float(v_dalgalanma_oran) > float(v_ort_mumboyoran) * 5:
+            #    v_girme = v_girme + 1
+
+        # Bütün kontrollerde ceza süresi dolmayan sabıkalı coinleri alma
+        with open(v_dosya_sabika, 'r') as dosya_sabika:
+            for line in dosya_sabika.read().splitlines():
+                aciklama = line
+                s = aciklama.split("*")
+                current_timestamp = round(time.time() * 1000)
+                v_current_timestamp = (current_timestamp) / 1000
+                v_current_timestamp = int(v_current_timestamp)
+                if str(s[0]) == v_symbol and float(v_current_timestamp) < float(s[1]):
+                    v_girme = v_girme + 1
+
+        # print('Sabıka sonrası-', v_girme, 'Min - Max', v_min, v_max, 'Close/open', v_close, v_open, datetime.now())
 
     return v_girme, v_artim_oran
 
@@ -734,7 +843,7 @@ def check_exist_ema_second(v_symbol, open, close, high, low, v_kisa, v_uzun):
 
 # ***********************************************************************************************************************
 def son_fiyat_getir(msg):
-    global v_sembol_islenen, v_last_price_g,genel_program_tipi
+    global v_sembol_islenen, v_last_price_g, genel_program_tipi
     # print('Fiyat', float(price[v_symbol]))
     if msg['e'] != 'error':
         v_last_price_g = float(msg['c'])
@@ -742,7 +851,7 @@ def son_fiyat_getir(msg):
     else:
         v_last_price_g = 0
         vmesaj = 'Hata - Son fiyat sıfır!..btc_pairs_trade  = ' + str(v_sembol_islenen)
-        Telebot_v1.mainma(vmesaj,genel_program_tipi)
+        Telebot_v1.mainma(vmesaj, genel_program_tipi)
     # print('Fiyat', v_last_price_g,datetime.now())
     if v_last_price_g == 0:
         time.sleep(0.1)
@@ -756,7 +865,7 @@ def socket_thread_front(v_symbol, v_inter):
     bsm = ThreadedWebsocketManager(api_key=API_Config.API_KEY, api_secret=API_Config.API_SECRET)
     bsm.start()
     bsm.start_symbol_ticker_socket(symbol=v_symbol, callback=son_fiyat_getir)
-    bsm.join(0.66)
+    bsm.join(1.66)
     # print('fff')
 
 
@@ -781,9 +890,10 @@ def socket_front(v_symbol, v_inter, v_zam, v_dalga_or):
 
 # ***********************************************************************************************************************
 def dosyalari_temizle():
-    global v_dosya_alinan, v_dosya_satilan
+    global v_dosya_alinan, v_dosya_satilan, v_dosya_islenen
     open(v_dosya_alinan, 'w').close()
     open(v_dosya_satilan, 'w').close()
+    open(v_dosya_islenen, 'w').close()
     # open("sabikalilar.txt", 'w').close()
 
 
@@ -813,36 +923,58 @@ def uygun_olmayani_temizle(v_symbol, v_inter_g, v_dalga_oran, v_mum_sayisi, v_zi
 
 # ***********************************************************************************************************************
 def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program_tip):
-    global v_dosya_coin, v_dosya_sembol, v_dosya_sabika
+    global v_dosya_coin, v_dosya_sembol, v_dosya_sabika, v_dosya_islenen, v_dosya_islenen_1, v_dosya_islenen_2
     v_girme = 0
     # #
     DB_transactions3.database_baglan(v_program_tip)
-
+    #
     DB_transactions3.USDT_Tablo_Yaz()
     DB_transactions3.File_write(v_dosya_sembol)
-    DB_transactions3.high_oran_coin()
+    DB_transactions3.high_oran_coin(v_program_tip)
     DB_transactions3.con.commit()
 
     v_dosya_coin = []
     with open(v_dosya_sembol, 'r') as dosya:
         i = 0
+        p=0
         for line in dosya.read().splitlines():
+            v_girme = 0
             v_symbol = line
 
             # Uygun olmayanları listeden çıkar. Dalgalanma bandı dışındaki ve sabıkalıları temizler
             v_girme = uygun_olmayani_temizle(v_symbol, v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran)
 
+            # Coin diğer robotlarca isleniyorsa alma
+            with open(v_dosya_islenen_1, 'r') as dosya_islenen1:
+                for l1 in dosya_islenen1.read().splitlines():
+                    if v_symbol == l1:
+                        v_girme = v_girme + 1
+            dosya_islenen1.close()
+
+            # Coin diğer robotlarca isleniyorsa alma
+            with open(v_dosya_islenen_2, 'r') as dosya_islenen2:
+                for l2 in dosya_islenen2.read().splitlines():
+                    if v_symbol == l2:
+                        v_girme = v_girme + 1
+            dosya_islenen2.close()
+
             if v_girme == 0:  # v_3m_c > 0 and v_ema_arti_3m == 1:
-                if i < 55:
+                if i < 50:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, '**', datetime.now())
                 else:
                     print('Devamı...Dosyaya eklenen Coin..: ', line, i, datetime.now())
                 i += 1
             else:
-                print('Dosyaya Uygun Değil .: ', line, i, datetime.now())
+                print('Dosyaya Uygun Değil .: ', line, p,'**', datetime.now())
+                p=p+1
+
     dosya.close()
     print('Dosya Tamamlandı', v_dosya_coin)
+
+    # Bu işlenenleri aynı anda diğer programlar almasın
+    for i in range(len(v_dosya_coin)):
+        Telebot_v1.islenen_coinler(v_dosya_islenen, str(v_dosya_coin[i]))
 
     # # ***************Temizlik***********************
     # with open(v_dosya_sabika, 'r') as dosya_sabika:
@@ -859,21 +991,21 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
 
 
 # ***********************************************************************************************************************
-def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran,v_program_tip):
+def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
+    global closes
     try:
+        # print('Clo', len(closes),datetime.now())
         get_first_set_of_closes(v_sem, v_int)
+        # print('Clo', closes[-1], closes[-2],closes[-3], openes[-1], openes[-2],openes[-3], datetime.now())
         # EMA, ADX gibi indikatörleri sn likte oluşturmak için kline lı kullanım..Yenileme 2 sn. Ama her sn veri geliyor.
         socket_front(v_sem, v_int, v_mum_sayisi, v_dalga_oran)
         # Son fiyatı almak için. Sn lik data yenileme
         socket_thread_front(v_sem, v_int)
         # time.sleep(2)
-    except BinanceAPIException as e:
-        print('Status code', str(e.status_code), v_sem)
-        print('Mesajı', str(e.message), v_sem)
-        # except Exception as exp:
-        v_hata_mesaj = 'Program Hata Oluştu!!..run_frontdata  = ' + str(e.message) + '-' + \
-                       str(e.status_code) + '-' + str(v_sem) + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+    except Exception as exp:
+        v_hata_mesaj = 'Program Hata Oluştu!!..run_frontdata  = ' + str(exp) + '-' + \
+                       str(v_sem) + str(datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ***********************************************************************************************************************
@@ -891,22 +1023,25 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g, v_islem_tutar, v_volume_fark_or
     try:
         # time.sleep(1.333)
         genel_program_tipi = v_program_tip
+
+        # Processler açıldığında parametreler silindiği için tekrar atandılar.
         dosya_parametre_ata(v_program_tip)
+
         # print('Alınn', v_dosya_satilan, v_dosya_alinan)
-        run_frontdata(v_sembol_g, v_inter_g, v_mum_sayisi, v_dalga_oran,v_program_tip)
-        time.sleep(0.33)
+        run_frontdata(v_sembol_g, v_inter_g, v_mum_sayisi, v_dalga_oran, v_program_tip)
+        # time.sleep(0.33)
         islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_ziplama_oran, v_bakiye,
               v_program_tip, v_sabika_sure)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..main_islem   = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(
             datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ***********************************************************************************************************************
 def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_zip, v_bakiye, v_program_tip,
           v_sabika_sure):
-    global v_last_price_g, v_open_price, v_alim_var, v_ziplama_oran,genel_program_tipi
+    global v_last_price_g, v_open_price, v_alim_var, v_ziplama_oran, genel_program_tipi
     v_ziplama_oran = float(v_zip)
     v_on_zaman = ''
     # time.sleep(1.66)
@@ -918,31 +1053,31 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
             if v_kota_doldu >= 15:
                 if v_on_zaman != v_tt:
                     v_mesajx = 'İçerde alım var. Kota dolduğu için yeni alım yapılamıyor!!!...' + str(datetime.now())
-                    Telebot_v1.mainma(v_mesajx,v_program_tip)
+                    Telebot_v1.mainma(v_mesajx, v_program_tip)
                     v_on_zaman = v_tt
 
                 if v_alim_var == 1:
-                    time.sleep(0.1)
+                    time.sleep(0.2)
                     # time.sleep(2)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
                                      v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
             else:
                 if v_alim_var == 0:
-                    time.sleep(0.1)
-                    # time.sleep(2)
+                    time.sleep(0.2)
+                    # time.sleep(800)
                     if v_last_price_g != 0:
                         # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, datetime.now())
 
                         whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
                                          v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
                 else:
-                    time.sleep(0.1)
-                    # time.sleep(2)
+                    time.sleep(0.2)
+                    # time.sleep(800)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
                                      v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ***********************************************************************************************************************
@@ -989,7 +1124,7 @@ def generateStochasticRSI(close_array, timeperiod):
 
 # ****************************************************EMA ve V_Client **************************************************
 def get_first_set_of_closes(v_symbol, v_inter):
-    global closes, highes, lowes, openes, v_dosya_coin, kesmeler,genel_program_tipi
+    global closes, highes, lowes, openes, v_dosya_coin, kesmeler, genel_program_tipi
     try:
         i = 0
         if v_inter == '1m':
@@ -1020,9 +1155,14 @@ def get_first_set_of_closes(v_symbol, v_inter):
                 if len(kesmeler) > 15:
                     kesmeler.pop(0)
 
+        closes.pop()
+        highes.pop()
+        lowes.pop()
+        openes.pop()
+
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + '-' + str(v_symbol) + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,genel_program_tipi)
+        Telebot_v1.mainma(v_hata_mesaj, genel_program_tipi)
 
 
 def dosyadan_parametreleri_oku():
@@ -1090,7 +1230,8 @@ def acil_satim(v_symbol):
 
 def dosya_parametre_ata(program_tip):
     global v_dosya_alinan, v_dosya_satilan, v_dosya_sembol, \
-        v_dosya_sabika, v_dosya_parametre, v_dosya_acilsat, v_dosya_genelbuy, v_dosya_sonuc
+        v_dosya_sabika, v_dosya_parametre, v_dosya_acilsat, \
+        v_dosya_genelbuy, v_dosya_sonuc, v_dosya_islenen, v_dosya_islenen_1, v_dosya_islenen_2
     if program_tip == 1:
         v_dosya_alinan = "DOSYALAR/Alinanlar.txt"
         v_dosya_satilan = "DOSYALAR/Satilanlar.txt"
@@ -1100,22 +1241,50 @@ def dosya_parametre_ata(program_tip):
         v_dosya_acilsat = 'DOSYALAR/acil_sat.txt'
         v_dosya_genelbuy = "DOSYALAR/genel_buy.txt"
         v_dosya_sonuc = "DOSYALAR/Sonuc.txt"
-    elif program_tip == 2:
-        v_dosya_alinan = "DOSYALAR/Alinanlar1.txt"
-        v_dosya_satilan = "DOSYALAR/Satilanlar1.txt"
-        v_dosya_sembol = 'DOSYALAR/Sembol31.txt'
-        v_dosya_sabika = 'DOSYALAR/sabikalilar1.txt'
-        v_dosya_parametre = 'DOSYALAR/parametreler1.txt'
-        v_dosya_acilsat = 'DOSYALAR/acil_sat1.txt'
-        v_dosya_genelbuy = "DOSYALAR/genel_buy1.txt"
-        v_dosya_sonuc = "DOSYALAR/Sonuc1.txt"
+        v_dosya_islenen = "DOSYALAR/islenen_c.txt"
+    elif program_tip == 2:  # *************************************Elephant
+        v_dosya_alinan = "DOSYALAR/Alinanlar_e.txt"
+        v_dosya_satilan = "DOSYALAR/Satilanlar_e.txt"
+        v_dosya_sembol = 'DOSYALAR/Sembol_e.txt'
+        v_dosya_sabika = 'DOSYALAR/sabikalilar_e.txt'
+        v_dosya_parametre = 'DOSYALAR/parametreler_e.txt'
+        v_dosya_acilsat = 'DOSYALAR/acil_sat_e.txt'
+        v_dosya_genelbuy = "DOSYALAR/genel_buy_e.txt"
+        v_dosya_sonuc = "DOSYALAR/Sonuc_e.txt"
+        v_dosya_islenen = "DOSYALAR/islenen_e.txt"
+        v_dosya_islenen_1 = "DOSYALAR/islenen_eb1.txt"
+        v_dosya_islenen_2 = "DOSYALAR/islenen_eb2.txt"
+    elif program_tip == 3:  # *************************************Elephant Bayby1
+        v_dosya_alinan = "DOSYALAR/Alinanlar_eb1.txt"
+        v_dosya_satilan = "DOSYALAR/Satilanlar_eb1.txt"
+        v_dosya_sembol = 'DOSYALAR/Sembol_eb1.txt'
+        v_dosya_sabika = 'DOSYALAR/sabikalilar_eb1.txt'
+        v_dosya_parametre = 'DOSYALAR/parametreler_eb1.txt'
+        v_dosya_acilsat = 'DOSYALAR/acil_sat_eb1.txt'
+        v_dosya_genelbuy = "DOSYALAR/genel_buy_e.txt"
+        v_dosya_sonuc = "DOSYALAR/Sonuc_eb1.txt"
+        v_dosya_islenen = "DOSYALAR/islenen_eb1.txt"
+        v_dosya_islenen_1 = "DOSYALAR/islenen_e.txt"
+        v_dosya_islenen_2 = "DOSYALAR/islenen_eb2.txt"
+    elif program_tip == 4:  # *************************************Elephant Bayby2
+        v_dosya_alinan = "DOSYALAR/Alinanlar_eb2.txt"
+        v_dosya_satilan = "DOSYALAR/Satilanlar_eb2.txt"
+        v_dosya_sembol = 'DOSYALAR/Sembol_eb2.txt'
+        v_dosya_sabika = 'DOSYALAR/sabikalilar_eb2.txt'
+        v_dosya_parametre = 'DOSYALAR/parametreler_eb2.txt'
+        v_dosya_acilsat = 'DOSYALAR/acil_sat_eb2.txt'
+        v_dosya_genelbuy = "DOSYALAR/genel_buy_e.txt"
+        v_dosya_sonuc = "DOSYALAR/Sonuc_eb2.txt"
+        v_dosya_islenen = "DOSYALAR/islenen_eb2.txt"
+        v_dosya_islenen_1 = "DOSYALAR/islenen_eb1.txt"
+        v_dosya_islenen_2 = "DOSYALAR/islenen_e.txt"
 
 
 def parametre_ata():
     # ********Dosyadan parametreleri oku
     v_inter_g, v_limit_g, v_in_g, v_islem_tutar, v_mod, v_test_prod, \
     v_ziplama_oran, v_mum_sayisi, v_dalga_oran, v_bakiye, \
-    v_volume_fark_oran, v_oran, v_kar_oran, v_zarar_oran, minVolumePerc, v_program_tip,\
+    v_volume_fark_oran, v_oran, v_kar_oran, v_zarar_oran, minVolumePerc, v_program_tip, \
     v_sabika_sure = dosyadan_parametreleri_oku()
 
     return v_inter_g, v_limit_g, v_in_g, v_islem_tutar, v_volume_fark_oran, v_oran, v_kar_oran, \
@@ -1163,9 +1332,9 @@ def db_baglan(program_tip):
 
 # ***********************************************************************************************************************
 if __name__ == '__main__':
-    global con, cursor,genel_program_tipi
+    global con, cursor, genel_program_tipi
     global v_dosya_param
-    v_dosya_param = "DOSYALAR/parametreler1.txt"
+    v_dosya_param = "DOSYALAR/parametreler_e.txt"
     v_dosya_coin = []
 
     # Tüm parametrelerin parametre dosyasından alınarak atanması
@@ -1184,7 +1353,7 @@ if __name__ == '__main__':
             bakiye_kontrol(v_bakiye)
 
             vm = '  İlk Başladı.........' + str(datetime.now())
-            Telebot_v1.mainma(vm,v_program_tip)
+            Telebot_v1.mainma(vm, v_program_tip)
             print(vm)
 
             while True:
@@ -1197,8 +1366,9 @@ if __name__ == '__main__':
                 dosyalari_temizle()
                 dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program_tip)
 
-                vm = 'İşlem Yapacağı Coinler........' + str(len(v_dosya_coin)) + '-' +  str(v_dosya_coin) + '-' + str(datetime.now())
-                Telebot_v1.mainma(vm,v_program_tip)
+                vm = 'İşlem Yapacağı Coinler........' + str(len(v_dosya_coin)) + '-' + str(v_dosya_coin) + '-' + str(
+                    datetime.now())
+                Telebot_v1.mainma(vm, v_program_tip)
 
                 # print('Alınn', v_dosya_satilan, v_dosya_alinan)
                 # Eğer uygun coin bulamadıysan yeniden başa dön
@@ -1217,7 +1387,7 @@ if __name__ == '__main__':
                                range(len(v_dosya_coin))]
                     # print('Başla.', results)
                     while True:
-                        time.sleep(900)
+                        time.sleep(1800)
                         v_esit = alinan_satilan_esitmi()
                         # v_esit =0
                         if v_esit == 1:
@@ -1232,13 +1402,13 @@ if __name__ == '__main__':
                             print(f'Active Children: {len(active)}')
                             v_m = 'Tüm Processler Kapatıldı...Yeniden başlanacak = ' + str(datetime.now())
                             print('Tüm Processler Kapatıldı...Yeniden başlanacak = ')
-                            Telebot_v1.mainma(v_m,v_program_tip)
+                            Telebot_v1.mainma(v_m, v_program_tip)
                             break
                         else:
                             v_m = 'İçerde alım olduğundan yenileyemedi.....' + str(datetime.now())
-                            Telebot_v1.mainma(v_m,v_program_tip)
+                            Telebot_v1.mainma(v_m, v_program_tip)
 
                 print('Çalışmaya başladılar...SON')
     except Exception as exp:
         v_hata_mesaj = 'Ana Program Hata Oluştu!!..  = ' + str(exp) + '-' + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj,v_program_tip)
+        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)

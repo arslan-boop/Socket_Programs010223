@@ -45,6 +45,12 @@ def dosyalari_temizle( v_dosya_alinan,v_dosya_satilan):
     open(v_dosya_alinan, 'w').close()
     open(v_dosya_satilan, 'w').close()
 
+def islenen_coinler(v_dosya_islenen,v_sembol):
+    with open(v_dosya_islenen, "a", encoding="utf-8") as f:
+        # f.write("\n"+message)
+        f.write(v_sembol + "\n")
+        # f.write(message)
+        f.close()
 def genel_alimlar(v_sembol,v_tip,v_dosya_genelbuy, v_dosya_alinan,v_dosya_satilan,v_dosya_sabika):
     if v_tip == 'A':
         with open(v_dosya_alinan, "a", encoding="utf-8") as f:

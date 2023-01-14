@@ -448,7 +448,7 @@ def on_message_f(ws_front, message):
     is_candle_closed = candle['x']
 
     x = ((float(close) - float(open)) / float(open)) * 100
-    if x >= v_ziplama_oran:
+    if float(x) >= float(v_ziplama_oran):
         # v_m = str(v_symbol) + '*' + 'Acil_Al..Oran' + '*' + "{:.2f}".format(float(x)) + '*' + str(datetime.now())
         # Telebot_v1.analiz_islem_log(v_m, v_symbol)
         v_acil_al = 1
@@ -492,16 +492,17 @@ def on_message_f(ws_front, message):
 def candle_acil_satim(v_symbol, open, close, high, low, closes, highes, lowes, openes, v_ziplama_oran, v_dalga_oran):
     global v_last_price_g, v_open_price, v_kesim, v_ters_kesim, v_alim_var, v_hizli_gonzales,genel_program_tipi
     try:
-        time.sleep(2.66)
+        time.sleep(1.22)
         closes.append(close)
         highes.append(high)
         lowes.append(low)
         openes.append(open)
 
+        #2.mum kırmızıya döndü
         if float(openes[-1]) > float(closes[-1]) and float(openes[-2]) > float(closes[-2]):
             v_ters_kesim = 1
             vm1 = 'Acil Satım Yapılacak...!..  = ' + str(v_symbol) + str(datetime.now()) + '*' + str(float(closes[-1])) \
-                  + '*' + str(openes[-1]) + '*' + str(v_last_price_g)
+                  + '*' + str(openes[-1]) + '*' +str(openes[-2]) + '*' +str(closes[-2]) + '*' + str(v_last_price_g)
             Telebot_v1.mainma(vm1,genel_program_tipi)
         else:
             print('İçerde alım var fakat satılamadı  ', v_symbol, datetime.now())
@@ -545,7 +546,8 @@ def candle_islem(v_symbol, kesmeler, open, close, high, low, closes, highes, low
                 kesmeler.pop(0)
 
             v_toplam = int(sum(kesmeler))
-            if v_1m_c > v_ziplama_oran and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
+
+            if float(v_1m_c) > float(v_ziplama_oran) and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
                 v_hizli_gonzales = 1
                 v_hata_mesaj = 'Hızlı Artan Var..  = ' + str(v_symbol) + ' Fiyat=' + \
                                str(close) + 'Oran=' + "{:.2f}".format(float(v_1m_c)) + \
@@ -556,7 +558,7 @@ def candle_islem(v_symbol, kesmeler, open, close, high, low, closes, highes, low
                 print('Değişim Anormal Yok= ', v_symbol, datetime.now())
                 v_hizli_gonzales = 0
         else:
-            time.sleep(2.333)
+            time.sleep(1.333)
             if float(openes[-1]) > float(closes[-1]) and float(closes[-1]) > float(v_last_price_g):
                 v_ters_kesim = 1
                 vm1 = 'Çık!..  = ' + str(v_symbol) + str(datetime.now())
@@ -602,7 +604,7 @@ def candle_islem_acil_alim(v_symbol, kesmeler, open, close, high, low, closes, h
 
         v_toplam = int(sum(kesmeler))
 
-        if v_1m_c > v_ziplama_oran and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
+        if float(v_1m_c) > float(v_ziplama_oran) and v_girme == 0 and (v_toplam >= 1 or ema_artik == 1):
             v_hizli_gonzales = 1
             v_hata_mesaj = 'Acil...Hızlı Artan Var..  = ' + str(v_symbol) + ' Fiyat=' + \
                            str(close) + 'Oran=' + "{:.2f}".format(float(v_1m_c)) + \
@@ -767,7 +769,7 @@ def socket_thread_front(v_symbol, v_inter):
     bsm = ThreadedWebsocketManager(api_key=API_Config.API_KEY, api_secret=API_Config.API_SECRET)
     bsm.start()
     bsm.start_symbol_ticker_socket(symbol=v_symbol, callback=son_fiyat_getir)
-    bsm.join(0.66)
+    bsm.join(1.66)
     # print('fff')
 
 
@@ -828,11 +830,10 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
     v_girme = 0
     # #
     DB_transactions3.database_baglan(v_program_tip)
-    #
-    # DB_transactions3.USDT_Tablo_Yaz()
-    # DB_transactions3.File_write(v_dosya_sembol)
-    # DB_transactions3.high_oran_coin()
-    # DB_transactions3.con.commit()
+    DB_transactions3.USDT_Tablo_Yaz()
+    DB_transactions3.File_write(v_dosya_sembol)
+    DB_transactions3.high_oran_coin()
+    DB_transactions3.con.commit()
 
     v_dosya_coin = []
     with open(v_dosya_sembol, 'r') as dosya:
@@ -841,10 +842,10 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
             v_symbol = line
 
             # Uygun olmayanları listeden çıkar. Dalgalanma bandı dışındaki ve sabıkalıları temizler
-            #v_girme = uygun_olmayani_temizle(v_symbol, v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran)
+            v_girme = uygun_olmayani_temizle(v_symbol, v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran)
 
             if v_girme == 0:  # v_3m_c > 0 and v_ema_arti_3m == 1:
-                if i < 3:
+                if i < 59:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, '**', datetime.now())
                 else:
@@ -933,22 +934,22 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
                     v_on_zaman = v_tt
 
                 if v_alim_var == 1:
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                     # time.sleep(2)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
                                      v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
             else:
                 if v_alim_var == 0:
-                    #time.sleep(0.1)
-                    time.sleep(8)
+                    time.sleep(0.01)
+                    #time.sleep(8)
                     if v_last_price_g != 0:
                         # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, datetime.now())
 
                         whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
                                          v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
                 else:
-                    time.sleep(0.1)
-                    time.sleep(8)
+                    time.sleep(0.01)
+                    #time.sleep(8)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
                                      v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
     except Exception as exp:

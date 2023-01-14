@@ -104,7 +104,7 @@ def Select_Balance(v_tip):
 
 # ************************************************TABLO / DOSYA YENİLEMELER
 
-def high_oran_coin():  # , v
+def high_oran_coin(v_program_tip):  # , v
     # Dosyaya açma
     # v_semboldos = open("High_oran.txt", "w")
     my_query = "SELECT name FROM USDT_COINS WHERE  PRICE_CHANGE_PERCENT >50 ORDER BY PRICE_CHANGE_PERCENT DESC "
@@ -119,7 +119,7 @@ def high_oran_coin():  # , v
         y = y.replace("('", "")
         y = y.replace("',)", "")
         v_mes = 'Yüksek Artımlı Coin var=' + y
-        Telebot_v1.mainma(v_mes)
+        Telebot_v1.mainma(v_mes,v_program_tip)
         # v_semboldos.write(y)
         # v_semboldos.write("\n")
     # cursor.close()
@@ -132,11 +132,11 @@ def high_oran_coin():  # , v
 def Sel_USDT(v_dosya_sembol):  # , v
     # Dosyaya açma
     v_semboldos = open(v_dosya_sembol, "w")
-    my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 1000000 AND PRICE_CHANGE_PERCENT >1 ORDER BY PRICE_CHANGE_PERCENT DESC "
+    my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 500000 AND PRICE_CHANGE_PERCENT >1 ORDER BY PRICE_CHANGE_PERCENT DESC "
     # my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 1000000 ORDER BY PRICE_CHANGE_PERCENT DESC "
     # my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
     cursor.execute(my_query)
-    i = 10
+    i = 150
     record = cursor.fetchmany(i)  # .fetchall()
     for x in record:
         # print(x, 'kayıt= ', record[0])
