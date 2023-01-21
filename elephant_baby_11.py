@@ -324,7 +324,7 @@ def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani, v_sa
             Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj, v_dosya_sonuc)
             v_alim_var = 0
             Telebot_v1.genel_alimlar(v_symbol, 'S', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
-            #Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
+            Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
 
         else:
             v_hata = 'SATIM işlemi Binance tarafında gerçekleşmemeiş!!! = ' + str(v_symbol)
@@ -388,7 +388,7 @@ def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani,
         Telebot_v1.kar_zarar_durumu(v_karzarar_mesaj, v_dosya_sonuc)
         v_alim_var = 0
         Telebot_v1.genel_alimlar(v_symbol, 'S', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
-        #Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
+        Telebot_v1.analiz(v_karzarar_mesaj, v_symbol)
     except Exception as exp:
         v_hata_mesaj = 'Satarken  Hata Oluştu!!.11   = ' + str(exp) + '-' + str(v_symbol) + '-' + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
@@ -962,6 +962,75 @@ def socket_thread_front(v_symbol, v_inter):
 
 
 # ***********************************************************************************************************************
+def socket_thread_getmumboyu(v_symbol, v_inter):
+    # v_symbol = v_symbol.lower()
+    #v_sembol_islenen = v_symbol
+    bsm1 = ThreadedWebsocketManager(api_key=API_Config.API_KEY, api_secret=API_Config.API_SECRET)
+    bsm1.start()
+    bsm1.start_kline_socket() .start_symbol_ticker_socket(symbol=v_symbol, callback=son_fiyat_getir)
+    bsm1.join(1.66)
+    # print('fff')
+#*****************************************************************************************************************
+def son_fiyat_getir_1(msg):
+    global v_sembol_islenen, v_last_price_g, genel_program_tipi
+    # print('Fiyat', float(price[v_symbol]))
+    if msg['e'] != 'error':
+        v_last_price_g = float(msg['c'])
+        # print('Fiyat', float(v_last_price_g),datetime.now())
+    else:
+        v_last_price_g = 0
+        vmesaj = 'Hata - Son fiyat sıfır!..btc_pairs_trade  = ' + str(v_sembol_islenen)
+        Telebot_v1.mainma(vmesaj, genel_program_tipi)
+    # print('Fiyat', v_last_price_g,datetime.now())
+    if v_last_price_g == 0:
+        time.sleep(0.1)
+
+#******************************************************************************************************************
+def get_mum_boyu_socket(v_symbol, v_inter):
+    # global
+    closes_x, highes_x, lowes_x, openes_x = [], [], [], []
+    v_close,v_open ,v_mum_boyu,v_close_prev,v_open_prev,v_mum_boyu_prev =0,0,0,0,0,0
+
+    try:
+        if v_inter == '1s':
+            v_sure = "1 minute ago UTC"
+        elif v_inter == '1m':
+            v_sure = "10 minute ago UTC"
+        elif v_inter == '3m':
+            v_sure = "30 minute ago UTC"
+        elif v_inter == '5m':
+            v_sure = "30 minute ago UTC"
+        elif v_inter == '15m':
+            v_sure = "1 hour ago UTC"
+        elif v_inter == '1h':
+            v_sure = "3 hour ago UTC"
+        elif v_inter == '4h':
+            v_sure = "12 hour ago UTC"
+
+        for kline in v_client.get_historical_klines(v_symbol, v_inter, v_sure):
+            closes_x.append(float(kline[4]))
+            highes_x.append(float(kline[2]))
+            lowes_x.append(float(kline[3]))
+            openes_x.append(float(kline[1]))
+
+        v_close = float(closes_x[-1])
+        v_open = float(openes_x[-1])
+        v_mum_boyu = v_close - v_open
+
+        v_close_prev = float(closes_x[-2])
+        v_open_prev = float(openes_x[-2])
+        v_mum_boyu_prev = v_close_prev - v_open_prev
+
+        return float(v_mum_boyu), float(v_mum_boyu_prev)
+
+    except Exception as exp:
+        v_hata_mesaj = 'Program Hata Oluştu!!..get_mum_boyu  = ' + str(exp) + '-' + str(v_symbol) + str(datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj, genel_program_tipi)
+
+
+
+
+# ***********************************************************************************************************************
 # 1 saniyelik stream verilerle kline daki son fiyatı vs alır
 def socket_front(v_symbol, v_inter, v_zam, v_dalga_or):
     global vn_front, ws_front_g, v_mum_sayisi, v_dalga_oran
@@ -1235,7 +1304,7 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
         while (True):
             v_tt = str(datetime.now())[0:16]
             v_kota_doldu = icerdeki_alinan()
-            if v_kota_doldu >= 3:
+            if v_kota_doldu >= 5:
                 print('KOTA doldu...')
                 # if v_atildi ==0 :
                 #     v_atildi = kota_mesaj(v_kota_doldu)
@@ -1370,7 +1439,7 @@ def get_first_set_of_closes(v_symbol, v_inter):
 def get_mum_boyu(v_symbol, v_inter):
     # global
     closes_x, highes_x, lowes_x, openes_x = [], [], [], []
-    v_close, v_open, v_mum_boyu, v_close_prev, v_open_prev, v_mum_boyu_prev = 0, 0, 0, 0, 0, 0
+    v_close,v_open ,v_mum_boyu,v_close_prev,v_open_prev,v_mum_boyu_prev =0,0,0,0,0,0
 
     try:
         if v_inter == '1s':
@@ -1672,11 +1741,11 @@ if __name__ == '__main__':
     v_piyasa_modu = piyasa_modunu_belirle("DOSYALAR/genel_parametreler.txt")
 
     if v_piyasa_modu == 'B':
-        v_dosya_param = "DOSYALAR/parametreler_eb2_B.txt"
+        v_dosya_param = "DOSYALAR/parametreler_eb1_B.txt"
     elif v_piyasa_modu == 'A':
-        v_dosya_param = "DOSYALAR/parametreler_eb2_A.txt"
+        v_dosya_param = "DOSYALAR/parametreler_eb1_A.txt"
     else:
-        v_dosya_param = "DOSYALAR/parametreler_eb2.txt"
+        v_dosya_param = "DOSYALAR/parametreler_eb1.txt"
 
     # Tüm parametrelerin parametre dosyasından alınarak atanması
     v_inter_g, v_limit_g, v_in_g, v_islem_tutar, v_volume_fark_oran, v_oran, v_kar_oran, \

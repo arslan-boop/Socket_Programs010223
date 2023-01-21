@@ -132,11 +132,11 @@ def high_oran_coin(v_program_tip):  # , v
 def Sel_USDT(v_dosya_sembol):  # , v
     # Dosyaya açma
     v_semboldos = open(v_dosya_sembol, "w")
-    my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 500000 AND PRICE_CHANGE_PERCENT >1 ORDER BY PRICE_CHANGE_PERCENT DESC "
-    # my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 1000000 ORDER BY PRICE_CHANGE_PERCENT DESC "
+    my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 1000000 AND PRICE_CHANGE_PERCENT >1 ORDER BY PRICE_CHANGE_PERCENT DESC "
+    #my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 500000 ORDER BY PRICE_CHANGE_PERCENT DESC "
     # my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
     cursor.execute(my_query)
-    i = 150
+    i = 100
     record = cursor.fetchmany(i)  # .fetchall()
     for x in record:
         # print(x, 'kayıt= ', record[0])
