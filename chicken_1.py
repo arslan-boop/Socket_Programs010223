@@ -146,7 +146,7 @@ def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
 
 # ***********************************************************************************************************************
 def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_bakiye,
-                     v_program_tip, v_sabika_sure):
+                     v_program_tip, v_sabika_sure,v_inter_g):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati, v_last_price_g, v_alim_miktar
     global v_client, v_alim_timestamp, v_alim_zamani, v_hizli_gonzales, v_ters_kesim, v_alim_orjtimestamp
     v_acilal = 0
@@ -219,7 +219,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                 v_satim_sebeb = 'Kar Hedefine Ulasti'
                 if v_test_prod == 'P':
                     # Karı devam ettir
-                    v_izsur_stop,v_satim_sebeb = iz_suren_kar_stop(v_symbol, '1m', v_kar_oran)
+                    v_izsur_stop,v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_inter_g, v_kar_oran)
                     #v_izsur_stop =1
                     if v_izsur_stop == 1:
                         #v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
@@ -230,7 +230,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                         v_ters_kesim = 0
                         v_hizli_gonzales = 0
                 else:
-                    v_izsur_stop,v_satim_sebeb = iz_suren_kar_stop(v_symbol, '1m', v_kar_oran)
+                    v_izsur_stop,v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_inter_g, v_kar_oran)
                     #v_izsur_stop = 1
                     if v_izsur_stop == 1:
                         #v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
@@ -1540,19 +1540,18 @@ def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
     try:
         # print('Clo', len(closes),datetime.now())
         # Closes Socketleri için ilk değerleri oluşturur
-        """
         get_first_closeslar_olustur(v_sem, '1m')
         time.sleep(0.5)
         get_first_closeslar_olustur(v_sem, '3m')
         time.sleep(0.5)
         get_first_closeslar_olustur(v_sem, '5m')
         time.sleep(0.5)
-        get_first_closeslar_olustur(v_sem, '15m')
-        time.sleep(0.1)
-        get_first_closeslar_olustur(v_sem, '1h')
-        time.sleep(0.1)
-        get_first_closeslar_olustur(v_sem, '4h')
-        time.sleep(0.1)
+        # get_first_closeslar_olustur(v_sem, '15m')
+        # time.sleep(0.1)
+        # get_first_closeslar_olustur(v_sem, '1h')
+        # time.sleep(0.1)
+        # get_first_closeslar_olustur(v_sem, '4h')
+        # time.sleep(0.1)
 
         socket_front_closeslar(v_sem, '1m')
         time.sleep(0.5)
@@ -1560,12 +1559,11 @@ def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
         time.sleep(0.5)
         socket_front_closeslar(v_sem, '5m')
         time.sleep(0.5)
-        socket_front_closeslar(v_sem, '15m')
-        time.sleep(0.1)
-        socket_front_closeslar(v_sem, '1h')
-        time.sleep(0.1)
-        socket_front_closeslar(v_sem, '4h')
-        """
+        # socket_front_closeslar(v_sem, '15m')
+        # time.sleep(0.1)
+        # socket_front_closeslar(v_sem, '1h')
+        # time.sleep(0.1)
+        # socket_front_closeslar(v_sem, '4h')
 
         # print('Clo', closes[-1], closes[-2],closes[-3], openes[-1], openes[-2],openes[-3], datetime.now())
 
@@ -1611,7 +1609,7 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g, v_islem_tutar, v_volume_fark_or
         run_frontdata(v_sembol_g, v_inter_g, v_mum_sayisi, v_dalga_oran, v_program_tip)
         # time.sleep(0.33)
         islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_ziplama_oran, v_bakiye,
-              v_program_tip, v_sabika_sure, v_piyasa_modu)
+              v_program_tip, v_sabika_sure, v_piyasa_modu,v_inter_g)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..main_islem   = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(
             datetime.now())
@@ -1633,7 +1631,7 @@ def kota_mesaj(v_kota_doldu):
 
 # ***********************************************************************************************************************
 def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_zip, v_bakiye, v_program_tip,
-          v_sabika_sure, v_piyasa_modu):
+          v_sabika_sure, v_piyasa_modu,v_inter_g):
     global v_last_price_g, v_open_price, v_alim_var, v_ziplama_oran, genel_program_tipi, genel_piyasa_modu
     v_ziplama_oran = float(v_zip)
     v_atildi = 0
@@ -1658,7 +1656,7 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
                     time.sleep(0.2)
                     # time.sleep(2)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
-                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
+                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure,v_inter_g)
             else:
                 if v_alim_var == 0:
                     time.sleep(0.2)
@@ -1667,12 +1665,12 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
                         # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, datetime.now())
 
                         whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
-                                         v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
+                                         v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure,v_inter_g)
                 else:
                     time.sleep(0.2)
                     # time.sleep(800)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
-                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure)
+                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure,v_inter_g)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(datetime.now())
         Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
