@@ -35,12 +35,12 @@ def main():
 
     twm.start_kline_socket(callback=handle_socket_message, symbol=symbol)
 
-    # multiple sockets can be started
-    twm.start_depth_socket(callback=handle_socket_message, symbol=symbol)
-   streams = ['bnbbtc@miniTicker', 'bnbbtc@bookTicker']
-    twm.start_multiplex_socket(callback=handle_socket_message, streams=streams)
-
-    twm.join()
+   #  # multiple sockets can be started
+   #  twm.start_depth_socket(callback=handle_socket_message, symbol=symbol)
+   # streams = ['bnbbtc@miniTicker', 'bnbbtc@bookTicker']
+   #  twm.start_multiplex_socket(callback=handle_socket_message, streams=streams)
+   #
+   #  twm.join()
 
 
 if __name__ == "__main__":
