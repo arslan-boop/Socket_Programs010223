@@ -1100,14 +1100,16 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             if float(closes[-i - 1]) < v_min:
                 v_min = float(closes[-i - 1])
 
-            # # Mum boylarının ortalama bir değerini bulup zıplamada kullanacağıx
-            # if float(closes[-i - 1]) == float(openes[-i - 1]):
-            #     mum_ortalama.append(0)
-            # else:
-            #     mum_boyu_orani = ((float(closes[-i - 1]) - float(openes[-i - 1])) / float(openes[-i - 1])) * 100
-            #     if mum_boyu_orani < 0:
-            #         mum_boyu_orani = float(-1 * float(mum_boyu_orani))
-            #         mum_ortalama.append(mum_boyu_orani)
+            # Mum boylarının ortalama bir değerini bulup zıplamada kullanacağıx
+            if float(closes[-i - 1]) == float(openes[-i - 1]):
+                mum_ortalama.append(0)
+            else:
+                mum_boyu_orani = ((float(closes[-i - 1]) - float(openes[-i - 1])) / float(openes[-i - 1])) * 100
+                if mum_boyu_orani < 0:
+                    mum_boyu_orani = float(-1 * float(mum_boyu_orani))
+                    mum_ortalama.append(mum_boyu_orani)
+                else:
+                    mum_ortalama.append(mum_boyu_orani)
 
             # Son mum belirlenen aralıktaki en yüksek mum değilse girme
             if float(closes[-i - 1]) > float(v_close):
@@ -1122,8 +1124,8 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
 
         if v_girme == 0:
             # Son mumdan öncekilerde mumlar arası dalgalanma belirlenen orandan büyükse bu yakın zamanda çıkmıştır veya testre piyasası yine alma
-            if float(v_dalgalanma_oran) > float(v_dalga_oran):
-                v_girme = v_girme + 1
+            # if float(v_dalgalanma_oran) > float(v_dalga_oran):
+            #     v_girme = v_girme + 1
 
             # En yüksek mum kapanışının üstünde zıplama oran kadar yükselti olsun
             # if float(v_close) == float(v_max):
@@ -1137,13 +1139,14 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             else:
                 v_girme = v_girme + 1
 
-            # # Son mum artım oranı ortalama mumun en az 2 katı olsun
-            # if len(mum_ortalama) > 0:
-            #     v_ort_mumboyoran = float(float(sum(mum_ortalama)) / len(mum_ortalama))
-            # else:
-            #     v_ort_mumboyoran = 0
-            # if float(v_artim_oran) < float(v_ort_mumboyoran) * 2:
-            #     v_girme = v_girme + 1
+            # Son mum artım oranı ortalama mumun en az 2 katı olsun
+            if len(mum_ortalama) > 0:
+                v_ort_mumboyoran = float(float(sum(mum_ortalama)) / len(mum_ortalama))
+            else:
+                v_ort_mumboyoran = 0
+
+            if float(v_artim_oran) < float(v_ort_mumboyoran) * 8:
+                v_girme = v_girme + 1
 
             # Boğada artım oranı ortalam mum artım oranının en az 3 katı değilse girme
             # if v_genel_piyasa_modu == 'B':
@@ -1163,18 +1166,18 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #             v_girme = v_girme + 1
 
             # Anlık mumların pozitif olması
-            if float(v_mum_boyu_1m) < 0:
-                v_girme = v_girme + 1
-            if float(v_mum_boyu_3m) < 0:
-                v_girme = v_girme + 1
-            if float(v_mum_boyu_5m) < 0:
-                v_girme = v_girme + 1
-            if float(v_mum_boyu_15m) < 0:
-                v_girme = v_girme + 1
-            if float(v_mum_boyu_1h) < 0:
-                v_girme = v_girme + 1
-            if float(v_mum_boyu_4h) < 0:
-                v_girme = v_girme + 1
+            # if float(v_mum_boyu_1m) < 0:
+            #     v_girme = v_girme + 1
+            # if float(v_mum_boyu_3m) < 0:
+            #     v_girme = v_girme + 1
+            # if float(v_mum_boyu_5m) < 0:
+            #     v_girme = v_girme + 1
+            # if float(v_mum_boyu_15m) < 0:
+            #     v_girme = v_girme + 1
+            # if float(v_mum_boyu_1h) < 0:
+            #     v_girme = v_girme + 1
+            # if float(v_mum_boyu_4h) < 0:
+            #     v_girme = v_girme + 1
 
             # ------------------------------------
             # 3m peryotta son 5 mumum en yükseği değilse girme
@@ -1191,9 +1194,9 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #
             # v_girme = v_girmex1 + 1
 
-        # Tüm ilk ve son kontrollerde sabikalı olmaması lazım
-        v_girms = sabikalilari_temizle(v_symbol)
-        v_girme = v_girme + int(v_girms)
+    # Tüm ilk ve son kontrollerde sabikalı olmaması lazım
+    v_girms = sabikalilari_temizle(v_symbol)
+    v_girme = v_girme + int(v_girms)
 
     return v_girme, v_artim_oran
 
@@ -1371,8 +1374,8 @@ def uygun_olmayani_temizle(v_symbol, v_inter_g, v_dalga_oran, v_mum_sayisi, v_zi
                                                v_ziplama_oran, v_piyasa_modu)
 
     # 5 dk son 12 mum arasında en büyük değilse girme
-    v_girme1 = get_first_set_of_closes_online(v_symbol, '5m', 12)
-    v_girme = int(v_girme1) + v_girme
+    # v_girme1 = get_first_set_of_closes_online(v_symbol, '5m', 12)
+    # v_girme = int(v_girme1) + v_girme
 
     return v_girme
 
@@ -1436,17 +1439,16 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
 
             if v_girme == 0:
                 # Uygun olmayanları listeden çıkar. Dalgalanma bandı dışındaki ve sabıkalıları temizler
-                # v_girmeu = uygun_olmayani_temizle(v_symbol, v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran,
-                #                                   v_piyasa_modu)
-                # v_girme = v_girme + int(v_girmeu)
+                v_girmeu = uygun_olmayani_temizle(v_symbol, v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_piyasa_modu)
+                v_girme = v_girme + int(v_girmeu)
 
                 # Mumları pozitif değilse de girme
                 if v_girme == 0:
                     # Belirtilen mumlar hep pozitif olmalı
-                    v_mumboy1, v_mumboy_prev1 = get_mum_boyu(v_symbol, '5m')
-                    v_mumboy2, v_mumboy_prev2 = get_mum_boyu(v_symbol, '15m')
-                    v_mumboy3, v_mumboy_prev3 = get_mum_boyu(v_symbol, '1h')
-                    v_mumboy4, v_mumboy_prev4 = get_mum_boyu(v_symbol, '4h')
+                    # v_mumboy1, v_mumboy_prev1 = get_mum_boyu(v_symbol, '5m')
+                    # v_mumboy2, v_mumboy_prev2 = get_mum_boyu(v_symbol, '15m')
+                    # v_mumboy3, v_mumboy_prev3 = get_mum_boyu(v_symbol, '1h')
+                    # v_mumboy4, v_mumboy_prev4 = get_mum_boyu(v_symbol, '4h')
 
                     # #4s de bir trend olsun
                     # v_girme1 = get_first_set_of_closes_online(v_symbol, '4h', 1)
@@ -1454,15 +1456,15 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
                     #
                     # v_girme2 = get_first_set_of_closes_online(v_symbol, '1h', 1)
                     # v_girme = int(v_girme2) + v_girme
-
-                    if float(v_mumboy1) < 0:
-                        v_girme = v_girme + 1
-                    if float(v_mumboy2) < 0:
-                        v_girme = v_girme + 1
-                    if float(v_mumboy3) < 0:
-                        v_girme = v_girme + 1
-                    if float(v_mumboy4) < 0:
-                        v_girme = v_girme + 1
+                    #
+                    # if float(v_mumboy1) < 0:
+                    #     v_girme = v_girme + 1
+                    # if float(v_mumboy2) < 0:
+                    #     v_girme = v_girme + 1
+                    # if float(v_mumboy3) < 0:
+                    #     v_girme = v_girme + 1
+                    # if float(v_mumboy4) < 0:
+                    #     v_girme = v_girme + 1
 
                     # Diğer robotlarca işleniyorsa da bakma
                     if v_girme == 0:
@@ -1538,6 +1540,7 @@ def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
     try:
         # print('Clo', len(closes),datetime.now())
         # Closes Socketleri için ilk değerleri oluşturur
+        """
         get_first_closeslar_olustur(v_sem, '1m')
         time.sleep(0.5)
         get_first_closeslar_olustur(v_sem, '3m')
@@ -1562,6 +1565,7 @@ def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
         socket_front_closeslar(v_sem, '1h')
         time.sleep(0.1)
         socket_front_closeslar(v_sem, '4h')
+        """
 
         # print('Clo', closes[-1], closes[-2],closes[-3], openes[-1], openes[-2],openes[-3], datetime.now())
 
