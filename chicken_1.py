@@ -1134,7 +1134,7 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             v_zip_hesap = ((float(v_close) - float(v_max)) / float(v_max)) * 100
 
             #if float(v_zip_hesap) < float(v_ziplama_oran) * 1.6 and float(v_zip_hesap) > float(v_ziplama_oran) * 0.4:
-            if float(v_zip_hesap) > float(v_ziplama_oran)*0.5 :
+            if float(v_zip_hesap) > float(v_ziplama_oran) :
                 print('ok')
             else:
                 v_girme = v_girme + 1
