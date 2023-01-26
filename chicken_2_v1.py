@@ -1,35 +1,33 @@
 import multiprocessing
 import warnings
-import gc
-import numpy
 from binance.exceptions import BinanceAPIException
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import requests
 from binance import ThreadedWebsocketManager
-from json import loads
-import traceback
-import logging
+# from json import loads
+# import traceback
+# import logging
 import threading
 # from binance.spot import Spot as Client
 import json
-import pandas as pd
+#import pandas as pd
 import websocket
 from binance.client import Client as Client_1
-import asyncio
-import binance
+# import asyncio
+# import binance
 import sqlite3
 import time
 from datetime import datetime
 import API_Config
-import talib as ta
-import numpy as np
+#import talib as ta
+#import numpy as np
 import DB_transactions3
 import Telebot_v1
 from decimal import Decimal, ROUND_DOWN
 # from threading import Thread
-from multiprocessing import Process
-from multiprocessing import Pool
+#from multiprocessing import Process
+#from multiprocessing import Pool
 import concurrent.futures
 
 # ssl den doğacak hataları bertaraf etmek için
@@ -1436,11 +1434,11 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
             # *******************************************
 
             if v_girme == 0:
-                if i < 55:
+                if i < 60:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, '**', datetime.now())
                     x = x + 1
-                    if x == 55:
+                    if x == 60:
                         break
                 else:
                     print('Devamı...Dosyaya eklenen Coin..: ', line, i, datetime.now())
@@ -2074,7 +2072,7 @@ def db_baglan(program_tip):
     if program_tip == 1:
         DB_FILE = "TRADE3.DB"
     else:
-        DB_FILE = "TRADE31.DB"
+        DB_FILE = "TRADE3.DB"
 
     con = sqlite3.connect(DB_FILE, timeout=10)
     cursor = con.cursor()
