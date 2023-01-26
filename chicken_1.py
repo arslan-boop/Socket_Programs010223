@@ -1,5 +1,6 @@
 import multiprocessing
 import warnings
+import gc
 import numpy
 from binance.exceptions import BinanceAPIException
 
@@ -1145,7 +1146,7 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             else:
                 v_ort_mumboyoran = 0
 
-            if float(v_artim_oran) < float(v_ort_mumboyoran) * 8:
+            if float(v_artim_oran) < float(v_ort_mumboyoran) * 5:
                 v_girme = v_girme + 1
 
             # Boğada artım oranı ortalam mum artım oranının en az 3 katı değilse girme
@@ -2185,6 +2186,8 @@ if __name__ == '__main__':
     global con, cursor, genel_program_tipi
     global v_dosya_param
     v_dosya_coin = []
+
+    #gc.collect()
 
     # Genel piyasa durumu belirlendi
     v_piyasa_modu = piyasa_modunu_belirle("DOSYALAR/genel_parametreler.txt")
