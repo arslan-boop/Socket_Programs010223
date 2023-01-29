@@ -92,6 +92,7 @@ def genel_alimlar(v_sembol,v_tip,v_dosya_genelbuy, v_dosya_alinan,v_dosya_satila
             # f.write(message)
             f.close()
 def sabikali_yap(v_sembol,v_dosya_sabika,v_sabika_sure):
+    #print('selam')
        with open(v_dosya_sabika, "a", encoding="utf-8") as f:
             # Cezası 4 saat sonra dolacak
             current_timestamp = round(time.time() * 1000)
@@ -105,7 +106,6 @@ def sabikali_yap(v_sembol,v_dosya_sabika,v_sabika_sure):
             f.write(v_mess + "\n")
             # f.write(message)
             f.close()
-
 if __name__ == '__main__':
     mainma("selam")
     mainma("selam")

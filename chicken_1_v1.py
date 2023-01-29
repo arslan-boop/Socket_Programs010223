@@ -52,6 +52,7 @@ closes_5m, highes_5m, lowes_5m, openes_5m = [], [], [], []
 closes_15m, highes_15m, lowes_15m, openes_15m = [], [], [], []
 closes_1h, highes_1h, lowes_1h, openes_1h = [], [], [], []
 closes_4h, highes_4h, lowes_4h, openes_4h = [], [], [], []
+mum_ortalama,mum_ortalama_yedek = [], []
 
 v_mum_boyu_1m, v_mum_boyu_3m, v_mum_boyu_5m, v_mum_boyu_15m, v_mum_boyu_1h, v_mum_boyu_4h = 0, 0, 0, 0, 0, 0
 v_mum_boyu_1m_c, v_mum_boyu_3m_c, v_mum_boyu_5m_c, v_mum_boyu_15m_c, v_mum_boyu_1h_c, v_mum_boyu_4h_c = 0, 0, 0, 0, 0, 0
@@ -90,8 +91,11 @@ def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
     global closes_15m, highes_15m, lowes_15m, openes_15m
     global closes_1h, highes_1h, lowes_1h, openes_1h
     global closes_4h, highes_4h, lowes_4h, openes_4h
+    global v_mum_boyu_1m_c,v_mum_boyu_3m_c,v_mum_boyu_5m_c,v_mum_boyu_15m_c,v_mum_boyu_1h_c,v_mum_boyu_4h_c
 
     v_mumboy, v_mumboy_prev, v_izsur_stop, v_acilst = 0, 0, 0, 0
+    v_close_kucukmu = 0
+    v_close_kucukmu_on=0
 
     # Belirlenen kar hedefine ulaştı. Artık iz süren kar stopla dk ta 2 mum kırmızı olana kadar devam..
     # Veya yeni stop oranına tekrar inerse satar
@@ -103,25 +107,37 @@ def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
         # v_mumboy, v_mumboy_prev = get_mum_boyu(v_symbol, v_inter)
 
         if v_inter == '1m':
+            v_close_kucukmu = float(v_mum_boyu_1m_c)
+            v_close_kucukmu_on = float(closes_1m[-1])
             v_mumboy = float(v_mum_boyu_1m)
-            v_mumboy_prev = closes_1m[-1]
+            v_mumboy_prev = float(closes_1m[-1])-float(openes_1m[-1])
         if v_inter == '3m':
+            v_close_kucukmu =  float(v_mum_boyu_3m_c)
+            v_close_kucukmu_on = float(closes_3m[-1])
             v_mumboy = float(v_mum_boyu_3m)
-            v_mumboy_prev = closes_3m[-1]
+            v_mumboy_prev =float(closes_3m[-1])-float(openes_3m[-1])
         if v_inter == '5m':
+            v_close_kucukmu =  float(v_mum_boyu_5m_c)
+            v_close_kucukmu_on = float(closes_5m[-1])
             v_mumboy = float(v_mum_boyu_5m)
-            v_mumboy_prev = closes_5m[-1]
+            v_mumboy_prev =float(closes_5m[-1])-float(openes_5m[-1])
         if v_inter == '15m':
+            v_close_kucukmu =  float(v_mum_boyu_15m_c)
+            v_close_kucukmu_on = float(closes_15m[-1])
             v_mumboy = float(v_mum_boyu_15m)
-            v_mumboy_prev = closes_15m[-1]
+            v_mumboy_prev = float(closes_15m[-1])-float(openes_15m[-1])
         if v_inter == '1h':
+            v_close_kucukmu =  float(v_mum_boyu_1h_c)
+            v_close_kucukmu_on = float(closes_1h[-1])
             v_mumboy = float(v_mum_boyu_1h)
-            v_mumboy_prev = closes_1h[-1]
+            v_mumboy_prev = float(closes_1h[-1])-float(openes_1h[-1])
         if v_inter == '4h':
+            v_close_kucukmu =  float(v_mum_boyu_4h_c)
+            v_close_kucukmu_on = float(closes_4h[-1])
             v_mumboy = float(v_mum_boyu_4h)
-            v_mumboy_prev = closes_4h[-1]
+            v_mumboy_prev = float(closes_4h[-1])-float(openes_4h[-1])
 
-        if float(v_mumboy) < 0 and float(v_mumboy_prev) < 0:
+        if float(v_mumboy) < 0 and float(v_mumboy_prev) < 0 and float(v_close_kucukmu_on)> float(v_close_kucukmu):
             v_izsur_stop = 1
             v_satim_sebeb = 'İzsürdü..2 mum red'
             break
@@ -220,7 +236,8 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                 v_satim_sebeb = 'Kar Hedefine Ulasti'
                 if v_test_prod == 'P':
                     # Karı devam ettir
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_inter_g, v_kar_oran)
+                    v_i='3m'
+                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
                     # v_izsur_stop =1
                     if v_izsur_stop == 1:
                         # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
@@ -231,7 +248,8 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                         v_ters_kesim = 0
                         v_hizli_gonzales = 0
                 else:
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_inter_g, v_kar_oran)
+                    v_i = '3m'
+                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
                     # v_izsur_stop = 1
                     if v_izsur_stop == 1:
                         # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
@@ -448,7 +466,7 @@ def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani,
 
 # ***********************************************************************************************************************
 def buy_coin(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_bakiye, v_program_tip, v_sabika_sure):
-    global v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika
+    global v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika,mum_ortalama_yedek
     try:
         # bakiye_kontrol(v_bakiye)
 
@@ -497,8 +515,9 @@ def buy_coin(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_bakiye,
                  '--' + ' Zaman = ' + '--' + str(v_alim_zamani) + '--' + \
                  'Fiyat = ' + '--' + "{:.8f}".format(float(v_alim_fiyati)) + '--' + \
                  'Miktar = ' + '--' + "{:.1f}".format(float(v_alim_miktar)) + '--' + \
-                 'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar)) + '--' + \
-                 'Zip=' + '--' + str(v_zip)
+                 'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar))
+                 # + '--' \
+                 #  + 'Mum Ortalama=' + '--' + str(mum_ortalama_yedek)
         # Telegram mesajo
         Telebot_v1.mainma(v_mess, v_program_tip)
         Telebot_v1.genel_alimlar(v_symbol, 'A', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
@@ -537,8 +556,9 @@ def buy_coin_test(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_ba
             v_symbol) + '--' + '*Tuttum Seni* HEDEF == ' + '--' + "{:.8f}".format(float(v_hedef_bid)) + \
                  '--' + ' Zaman = ' + '--' + str(v_alim_zamani) + '--' + \
                  'Fiyat = ' + '--' + "{:.8f}".format(float(v_alim_fiyati)) + '--' + \
-                 'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar)) + '--' + \
-                 'Zip=' + '--' + str(v_zip)
+                 'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar))
+                 # + '--' \
+                 #  +'Mum Ortalama ' + '--' + str(mum_ortalama_yedek)
         # Telegram mesajo
         Telebot_v1.mainma(v_mess, v_program_tip)
         Telebot_v1.genel_alimlar(v_symbol, 'A', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
@@ -574,8 +594,10 @@ def on_message_f_1m(ws_front_1m, message):
     is_candle_closed = candle['x']
     if is_candle_closed:
         closes_1m.append(close)
+        openes_1m.append(open)
         if len(closes_1m) > 10:
             closes_1m.pop(0)
+            openes_1m.pop(0)
 
 
 def on_open_f_1m(ws_front_1m):
@@ -615,8 +637,10 @@ def on_message_f_3m(ws_front_3m, message):
     is_candle_closed = candle['x']
     if is_candle_closed:
         closes_3m.append(close)
+        openes_3m.append(open)
         if len(closes_3m) > 10:
             closes_3m.pop(0)
+            openes_3m.pop(0)
 
 
 def on_open_f_3m(ws_front_3m):
@@ -656,8 +680,10 @@ def on_message_f_5m(ws_front_5m, message):
     is_candle_closed = candle['x']
     if is_candle_closed:
         closes_5m.append(close)
+        openes_5m.append(open)
         if len(closes_5m) > 10:
             closes_5m.pop(0)
+            openes_5m.pop(0)
 
 
 def on_open_f_5m(ws_front_5m):
@@ -696,8 +722,10 @@ def on_message_f_15m(ws_front_15m, message):
     is_candle_closed = candle['x']
     if is_candle_closed:
         closes_15m.append(close)
+        openes_15m.append(open)
         if len(closes_15m) > 10:
             closes_15m.pop(0)
+            openes_15m.pop(0)
 
 
 def on_open_f_15m(ws_front_15m):
@@ -736,8 +764,11 @@ def on_message_f_1h(ws_front_1h, message):
     is_candle_closed = candle['x']
     if is_candle_closed:
         closes_1h.append(close)
+        openes_1h.append(open)
+
         if len(closes_1h) > 10:
             closes_1h.pop(0)
+            openes_1h.pop(0)
 
 
 def on_open_f_1h(ws_front_1h):
@@ -776,8 +807,10 @@ def on_message_f_4h(ws_front_4h, message):
     is_candle_closed = candle['x']
     if is_candle_closed:
         closes_4h.append(close)
+        openes_4h.append(open)
         if len(closes_4h) > 10:
             closes_4h.pop(0)
+            openes_4h.pop(0)
 
 
 def on_open_f_4h(ws_front_4h):
@@ -1021,15 +1054,12 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
     global closes_4h, highes_4h, lowes_4h, openes_4h
     global v_mum_boyu_1m_c, v_mum_boyu_3m_c, v_mum_boyu_5m_c, v_mum_boyu_15m_c, v_mum_boyu_1h_c, v_mum_boyu_4h_c
     global v_mum_boyu_1m_o, v_mum_boyu_3m_o, v_mum_boyu_5m_o, v_mum_boyu_15m_o, v_mum_boyu_1h_o, v_mum_boyu_4h_o
-
+    global mum_ortalama,mum_ortalama_yedek
     mum_boyu_orani = 0
     v_mum_poz_3m, v_mum_poz_5m, v_mum_poz_15m, v_mum_poz_4h = 0, 0, 0, 0
-
     # global mum_ortalama
     mum_ortalama = []
-
-    v_girme, v_girms, v_girmex1 = 0, 0, 0
-
+    v_girme, v_girms, v_girmex1,v_son_3 = 0, 0, 0,0
     v_close = closes[-1]
     v_open = openes[-1]
 
@@ -1064,6 +1094,10 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
                 v_girme = v_girme + 1
 
     else:  # Alım satımlarda yapılan anlık fitreleme
+        # *********************Yapılan kontroller *********************************
+        # Son mum en yüksek olsun , Dalgalanma oran uygun olsun, Zıplama farkı zip_orandan büyük olsun fakat
+        # zip oranın 4 katından da büyük olmasın, Sondan önceki 3 mum son mumdan büyük olmasın
+
         v_min = float(closes[-2])
         v_max = float(closes[-2])
 
@@ -1110,7 +1144,7 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             v_zip_hesap = ((float(v_close) - float(v_max)) / float(v_max)) * 100
 
             # if float(v_zip_hesap) < float(v_ziplama_oran) * 1.6 and float(v_zip_hesap) > float(v_ziplama_oran) * 0.4:
-            if float(v_zip_hesap) > float(v_ziplama_oran):
+            if float(v_zip_hesap) > float(v_ziplama_oran) : # and float(v_zip_hesap) < float(v_ziplama_oran)*5:
                 print('ok')
             else:
                 v_girme = v_girme + 1
@@ -1121,13 +1155,32 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             else:
                 v_ort_mumboyoran = 0
 
-            if float(v_artim_oran) < float(v_ort_mumboyoran) * 5:
-                v_girme = v_girme + 1
-
-            # Boğada artım oranı ortalam mum artım oranının en az 3 katı değilse girme
-            # if v_genel_piyasa_modu == 'B':
-            #     if float(v_artim_oran) < float(v_ort_mumboyoran) * 1.5:
+            #son mum yükselmesinden önce büyük mumlar varsa girme..Patlam olmuştur gücü azalıyordur.
+            #
+            # for i in range(int(v_say)-2):
+            #     if float(mum_ortalama[i]) > float(v_artim_oran):
             #         v_girme = v_girme + 1
+            #         # vmesaj = 'Mum boyu daha uzun  = ' + str(v_symbol)+'*'+str(v_artim_oran)+'*'+str(mum_ortalama)+'*'+str(i)
+            #         # Telebot_v1.mainma(vmesaj, genel_program_tipi)
+            #     else:
+            #         print('uyg')
+            #         # vmesaj = 'Mum boyu kısa ..uygun = ' + str(v_symbol)+'*'+str(v_artim_oran)+'*'+str(mum_ortalama)+'*'+str(i)
+            #         # Telebot_v1.mainma(vmesaj, genel_program_tipi)
+
+            mum_ortalama.append(float(v_artim_oran))
+            mum_ortalama.append(int(v_girme)+999)
+            mum_ortalama_yedek = mum_ortalama
+
+            #Boğada artım oranı ortalam mum artım oranının en az 3 katı değilse girme
+            if float(v_artim_oran) >= float(v_ort_mumboyoran) * 1.2:
+                print('ok')
+            else:
+                v_girme = v_girme + 1
+            #
+            # #Mumlar mümkün olduğunca küçük olsun
+            # if float(v_ort_mumboyoran) >0.6:
+            #     v_girme = v_girme + 1
+
 
             # Dalga 5 katlı mumdan büyükse girmesin
             # Bogada birden zıplamalar olabilir. O nedenle ortalama mumlar küçük olduğundan dalyaga göre oran yüksek olmalı
@@ -1141,13 +1194,13 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #         if float(v_dalgalanma_oran) > float(v_ort_mumboyoran) * 3:
             #             v_girme = v_girme + 1
 
-            # Anlık mumların pozitif olması
-            # if float(v_mum_boyu_1m) < 0:
-            #     v_girme = v_girme + 1
-            # if float(v_mum_boyu_3m) < 0:
-            #     v_girme = v_girme + 1
-            # if float(v_mum_boyu_5m) < 0:
-            #     v_girme = v_girme + 1
+            #Anlık mumların pozitif olması
+            if float(v_mum_boyu_1m) < 0:
+                v_girme = v_girme + 1
+            if float(v_mum_boyu_3m) < 0:
+                v_girme = v_girme + 1
+            if float(v_mum_boyu_5m) < 0:
+                v_girme = v_girme + 1
             # if float(v_mum_boyu_15m) < 0:
             #     v_girme = v_girme + 1
             # if float(v_mum_boyu_1h) < 0:
@@ -1156,19 +1209,21 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #     v_girme = v_girme + 1
 
             # ------------------------------------
-            # 3m peryotta son 5 mumum en yükseği değilse girme
-            # v_girmex1 = get_first_set_of_closes_online(v_symbol, '3m', 5)
-            # v_closex1 = v_mum_boyu_3m_c
+            #3m peryotta son 5 mumum en yükseği değilse girme
+            v_girmex1 = get_first_set_of_closes_online(v_symbol, '3m', 5)
+            v_girme = v_girme + v_girmex1
+
+
+            #v_closex1 = v_mum_boyu_3m_c
             # print(v_closex1, datetime.now())
             # print('Closes', closes_3m)
-            # v_mum_boyu = float(closes[-1]) - float(openes_on[-1])
+            #v_mum_boyu = float(closes[-1]) - float(openes_on[-1])
 
             # for i in range(1, 5):
             #     if float(closes_3m[-i]) > float(v_closex1):
             #         v_girmex1 = v_girmex1 + 1
             #         break
             #
-            # v_girme = v_girmex1 + 1
 
     # Tüm ilk ve son kontrollerde sabikalı olmaması lazım
     v_girms = sabikalilari_temizle(v_symbol)
@@ -1436,11 +1491,11 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
             # *******************************************
 
             if v_girme == 0:
-                if i < 60:
+                if i < 50:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, '**', datetime.now())
                     x = x + 1
-                    if x == 60:
+                    if x == 50:
                         break
                 else:
                     print('Devamı...Dosyaya eklenen Coin..: ', line, i, datetime.now())
@@ -1499,18 +1554,30 @@ def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
     try:
         # print('Clo', len(closes),datetime.now())
         # Closes Socketleri için ilk değerleri oluşturur
-        if v_int == '1m':
-            get_first_closeslar_olustur(v_sem, '1m')
-            time.sleep(0.5)
-            socket_front_closeslar(v_sem, '1m')
-        elif v_int == '3m':
-            get_first_closeslar_olustur(v_sem, '3m')
-            time.sleep(0.5)
-            socket_front_closeslar(v_sem, '3m')
-        elif v_int == '5m':
-            get_first_closeslar_olustur(v_sem, '5m')
-            time.sleep(0.5)
-            socket_front_closeslar(v_sem, '5m')
+        # if v_int == '1m':
+        #     get_first_closeslar_olustur(v_sem, '1m')
+        #     time.sleep(0.5)
+        #     socket_front_closeslar(v_sem, '1m')
+        # elif v_int == '3m':
+        #     get_first_closeslar_olustur(v_sem, '3m')
+        #     time.sleep(0.5)
+        #     socket_front_closeslar(v_sem, '3m')
+        # elif v_int == '5m':
+        #     get_first_closeslar_olustur(v_sem, '5m')
+        #     time.sleep(0.5)
+        #     socket_front_closeslar(v_sem, '5m')
+
+        get_first_closeslar_olustur(v_sem, '1m')
+        time.sleep(0.05)
+        socket_front_closeslar(v_sem, '1m')
+        time.sleep(0.05)
+        get_first_closeslar_olustur(v_sem, '3m')
+        time.sleep(0.05)
+        socket_front_closeslar(v_sem, '3m')
+        time.sleep(0.05)
+        get_first_closeslar_olustur(v_sem, '5m')
+        time.sleep(0.05)
+        socket_front_closeslar(v_sem, '5m')
 
         # İşlem yapılan ana closes oluşturulur
         get_first_set_of_closes(v_sem, v_int)

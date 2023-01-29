@@ -1,0 +1,17 @@
+v_inter_g*1m
+v_limit_g*5000
+v_in_g*1000ms
+v_islem_tutar*50
+v_mod*S
+v_test_prod*P
+v_ziplama_oran*0.4
+v_mum_sayisi*40
+v_dalga_oran*5
+v_bakiye*300
+v_volume_fark_oran*0.02
+v_oran*0.03
+v_kar_oran*1.009
+v_zarar_oran*0.995
+minVolumePerc*0.01
+program_tip*CO
+v_sabika_sure*240

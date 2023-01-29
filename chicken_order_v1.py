@@ -52,7 +52,7 @@ closes_5m, highes_5m, lowes_5m, openes_5m = [], [], [], []
 closes_15m, highes_15m, lowes_15m, openes_15m = [], [], [], []
 closes_1h, highes_1h, lowes_1h, openes_1h = [], [], [], []
 closes_4h, highes_4h, lowes_4h, openes_4h = [], [], [], []
-mum_ortalama,mum_ortalama_yedek = [], []
+mum_ortalama, mum_ortalama_yedek = [], []
 
 v_mum_boyu_1m, v_mum_boyu_3m, v_mum_boyu_5m, v_mum_boyu_15m, v_mum_boyu_1h, v_mum_boyu_4h = 0, 0, 0, 0, 0, 0
 v_mum_boyu_1m_c, v_mum_boyu_3m_c, v_mum_boyu_5m_c, v_mum_boyu_15m_c, v_mum_boyu_1h_c, v_mum_boyu_4h_c = 0, 0, 0, 0, 0, 0
@@ -91,11 +91,11 @@ def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
     global closes_15m, highes_15m, lowes_15m, openes_15m
     global closes_1h, highes_1h, lowes_1h, openes_1h
     global closes_4h, highes_4h, lowes_4h, openes_4h
-    global v_mum_boyu_1m_c,v_mum_boyu_3m_c,v_mum_boyu_5m_c,v_mum_boyu_15m_c,v_mum_boyu_1h_c,v_mum_boyu_4h_c
+    global v_mum_boyu_1m_c, v_mum_boyu_3m_c, v_mum_boyu_5m_c, v_mum_boyu_15m_c, v_mum_boyu_1h_c, v_mum_boyu_4h_c
 
     v_mumboy, v_mumboy_prev, v_izsur_stop, v_acilst = 0, 0, 0, 0
     v_close_kucukmu = 0
-    v_close_kucukmu_on=0
+    v_close_kucukmu_on = 0
 
     # Belirlenen kar hedefine ulaştı. Artık iz süren kar stopla dk ta 2 mum kırmızı olana kadar devam..
     # Veya yeni stop oranına tekrar inerse satar
@@ -110,34 +110,34 @@ def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
             v_close_kucukmu = float(v_mum_boyu_1m_c)
             v_close_kucukmu_on = float(closes_1m[-1])
             v_mumboy = float(v_mum_boyu_1m)
-            v_mumboy_prev = float(closes_1m[-1])-float(openes_1m[-1])
+            v_mumboy_prev = float(closes_1m[-1]) - float(openes_1m[-1])
         if v_inter == '3m':
-            v_close_kucukmu =  float(v_mum_boyu_3m_c)
+            v_close_kucukmu = float(v_mum_boyu_3m_c)
             v_close_kucukmu_on = float(closes_3m[-1])
             v_mumboy = float(v_mum_boyu_3m)
-            v_mumboy_prev =float(closes_3m[-1])-float(openes_3m[-1])
+            v_mumboy_prev = float(closes_3m[-1]) - float(openes_3m[-1])
         if v_inter == '5m':
-            v_close_kucukmu =  float(v_mum_boyu_5m_c)
+            v_close_kucukmu = float(v_mum_boyu_5m_c)
             v_close_kucukmu_on = float(closes_5m[-1])
             v_mumboy = float(v_mum_boyu_5m)
-            v_mumboy_prev =float(closes_5m[-1])-float(openes_5m[-1])
+            v_mumboy_prev = float(closes_5m[-1]) - float(openes_5m[-1])
         if v_inter == '15m':
-            v_close_kucukmu =  float(v_mum_boyu_15m_c)
+            v_close_kucukmu = float(v_mum_boyu_15m_c)
             v_close_kucukmu_on = float(closes_15m[-1])
             v_mumboy = float(v_mum_boyu_15m)
-            v_mumboy_prev = float(closes_15m[-1])-float(openes_15m[-1])
+            v_mumboy_prev = float(closes_15m[-1]) - float(openes_15m[-1])
         if v_inter == '1h':
-            v_close_kucukmu =  float(v_mum_boyu_1h_c)
+            v_close_kucukmu = float(v_mum_boyu_1h_c)
             v_close_kucukmu_on = float(closes_1h[-1])
             v_mumboy = float(v_mum_boyu_1h)
-            v_mumboy_prev = float(closes_1h[-1])-float(openes_1h[-1])
+            v_mumboy_prev = float(closes_1h[-1]) - float(openes_1h[-1])
         if v_inter == '4h':
-            v_close_kucukmu =  float(v_mum_boyu_4h_c)
+            v_close_kucukmu = float(v_mum_boyu_4h_c)
             v_close_kucukmu_on = float(closes_4h[-1])
             v_mumboy = float(v_mum_boyu_4h)
-            v_mumboy_prev = float(closes_4h[-1])-float(openes_4h[-1])
+            v_mumboy_prev = float(closes_4h[-1]) - float(openes_4h[-1])
 
-        if float(v_mumboy) < 0 and float(v_mumboy_prev) < 0 and float(v_close_kucukmu_on)> float(v_close_kucukmu):
+        if float(v_mumboy) < 0 and float(v_mumboy_prev) < 0 and float(v_close_kucukmu_on) > float(v_close_kucukmu):
             v_izsur_stop = 1
             v_satim_sebeb = 'İzsürdü..2 mum red'
             break
@@ -163,10 +163,13 @@ def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
 
 # ***********************************************************************************************************************
 def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_bakiye,
-                     v_program_tip, v_sabika_sure, v_inter_g):
+                     v_program_tip, v_sabika_sure, v_inter_g, v_genel_orderbook, v_volume_fark_oran, v_oran):
     global v_alim_var, v_hedef_bid_global, v_hedef_ask_global, v_alim_fiyati, v_last_price_g, v_alim_miktar
     global v_client, v_alim_timestamp, v_alim_zamani, v_hizli_gonzales, v_ters_kesim, v_alim_orjtimestamp
+    global  v_mum_boyu_1m,v_mum_boyu_3m,v_mum_boyu_5m
+
     v_acilal = 0
+    v_girme = 0
 
     if v_alim_var == 0:
         try:
@@ -174,7 +177,19 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
             # Acil alınacak durumlar için
             v_acilal = acil_alim_dosya(v_symbol)
 
-            if v_hizli_gonzales == 1:  # Alım yap denmiş demektir.
+            # Emir Defterindeki durum kontrolü
+            v_order_kontrol = orderbook_kontrol(v_symbol, v_genel_orderbook, v_volume_fark_oran, v_oran)
+
+            #1,3,5 dk da pozitif mumlar olsun
+            # if float(v_mum_boyu_1m) < 0:
+            #     v_girme = v_girme + 1
+            # if float(v_mum_boyu_3m) < 0:
+            #     v_girme = v_girme + 1
+            # if float(v_mum_boyu_5m) < 0:
+            #     v_girme = v_girme + 1
+
+            #if v_hizli_gonzales == 3 or v_order_kontrol == 1:  # Alım yap denmiş demektir.
+            if  v_order_kontrol == 1 :#and v_girme ==0 :  #
                 if v_test_prod == 'P':
                     v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, \
                     v_alim_miktar, v_alim_fiyati, v_alim_zamani, v_alim_orjtimestamp = buy_coin(v_symbol, v_islem_tutar,
@@ -194,6 +209,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
 
                 v_alim_var = 1
                 v_hizli_gonzales = 0
+
             elif v_acilal == 1:  # Alım yap denmiş demektir.
                 if v_test_prod == 'P':
                     v_son_fiyat, v_hedef_bid, v_hedef_ask, v_hedef_bid_global, v_hedef_ask_global, v_alim_timestamp, \
@@ -236,28 +252,27 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                 v_satim_sebeb = 'Kar Hedefine Ulasti'
                 if v_test_prod == 'P':
                     # Karı devam ettir
-                    v_i='3m'
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
+                    # v_i='3m'
+                    # v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
                     # v_izsur_stop =1
-                    if v_izsur_stop == 1:
-                        # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
-                        sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,
-                                  v_program_tip,
-                                  v_sabika_sure)
-                        v_alim_var = 0
-                        v_ters_kesim = 0
-                        v_hizli_gonzales = 0
+                    # if v_izsur_stop == 1:
+                    # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
+                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,
+                              v_program_tip, v_sabika_sure)
+                    v_alim_var = 0
+                    v_ters_kesim = 0
+                    v_hizli_gonzales = 0
                 else:
-                    v_i = '3m'
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
+                    # v_i = '3m'
+                    # v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
                     # v_izsur_stop = 1
-                    if v_izsur_stop == 1:
-                        # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
-                        sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,
-                                       v_program_tip, v_sabika_sure)
-                        v_alim_var = 0
-                        v_ters_kesim = 0
-                        v_hizli_gonzales = 0
+                    # if v_izsur_stop == 1:
+                    # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
+                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,
+                                   v_program_tip, v_sabika_sure)
+                    v_alim_var = 0
+                    v_ters_kesim = 0
+                    v_hizli_gonzales = 0
 
                 # time.sleep(60)
             # ********************************************************Belirlenen zararın altına indiyse
@@ -276,33 +291,33 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                 # *********************************************** 5 dk geçtikten sonra zarar etme şansın kalmasın
             # elif (v_satim_timestamp >= v_alim_timestamp)  :
             #    v_hedef_ask_global = float(v_alim_fiyati)
-            # v_satim_sebeb = 'Uyusuk Cıktı'
-            # **********************************************************İlgili süre dolduysa
-            # elif (v_satim_timestamp >= v_alim_timestamp) and float(v_alim_fiyati) >= float(v_last_price_g):
-            #     v_satim_sebeb = 'Uyusuk Cıktı'
+            #    v_satim_sebeb = 'Uyusuk Cıktı'
+            #**********************************************************İlgili süre dolduysa
+            elif (v_satim_timestamp >= v_alim_timestamp) and float(v_alim_fiyati) >= float(v_last_price_g):
+                v_satim_sebeb = 'Uyusuk Cıktı'
+                if v_test_prod == 'P':
+                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 3, v_alim_zamani, v_satim_sebeb, v_program_tip,
+                              v_sabika_sure)
+                else:
+                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 3, v_alim_zamani, v_satim_sebeb,
+                                   v_program_tip, v_sabika_sure)
+                v_alim_var = 0
+                v_ters_kesim = 0
+                v_hizli_gonzales = 0
+            #     # time.sleep(60)
+            # ***********************************************************2.mum da eksiye döndüyse
+            # elif v_ters_kesim == 1:  # Satım koşulları gerçekleşmiş.
+            #     v_satim_sebeb = '2.mum Kırmızıya Dondu'
             #     if v_test_prod == 'P':
-            #         sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 3, v_alim_zamani, v_satim_sebeb, v_program_tip,
+            #         sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb, v_program_tip,
             #                   v_sabika_sure)
             #     else:
-            #         sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 3, v_alim_zamani, v_satim_sebeb,
+            #         sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,
             #                        v_program_tip, v_sabika_sure)
             #     v_alim_var = 0
             #     v_ters_kesim = 0
             #     v_hizli_gonzales = 0
             #     # time.sleep(60)
-            # ***********************************************************2.mum da eksiye döndüyse
-            elif v_ters_kesim == 1:  # Satım koşulları gerçekleşmiş.
-                v_satim_sebeb = '2.mum Kırmızıya Dondu'
-                if v_test_prod == 'P':
-                    sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb, v_program_tip,
-                              v_sabika_sure)
-                else:
-                    sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,
-                                   v_program_tip, v_sabika_sure)
-                v_alim_var = 0
-                v_ters_kesim = 0
-                v_hizli_gonzales = 0
-                # time.sleep(60)
             # ************************************************************** Acil satım yapılacaksa (manuel müdahale)
             elif v_acilsat == 1:  # Satım koşulları gerçekleşmiş.
                 v_satim_sebeb = 'Acil Satimi Istendi.'
@@ -466,7 +481,7 @@ def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani,
 
 # ***********************************************************************************************************************
 def buy_coin(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_bakiye, v_program_tip, v_sabika_sure):
-    global v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika,mum_ortalama_yedek
+    global v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika, mum_ortalama_yedek
     try:
         # bakiye_kontrol(v_bakiye)
 
@@ -516,8 +531,8 @@ def buy_coin(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_bakiye,
                  'Fiyat = ' + '--' + "{:.8f}".format(float(v_alim_fiyati)) + '--' + \
                  'Miktar = ' + '--' + "{:.1f}".format(float(v_alim_miktar)) + '--' + \
                  'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar))
-                 # + '--' \
-                 #  + 'Mum Ortalama=' + '--' + str(mum_ortalama_yedek)
+        # + '--' \
+        #  + 'Mum Ortalama=' + '--' + str(mum_ortalama_yedek)
         # Telegram mesajo
         Telebot_v1.mainma(v_mess, v_program_tip)
         Telebot_v1.genel_alimlar(v_symbol, 'A', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
@@ -557,8 +572,8 @@ def buy_coin_test(v_symbol, v_islem_tutar, v_kar_oran, v_zarar_oran, v_zip, v_ba
                  '--' + ' Zaman = ' + '--' + str(v_alim_zamani) + '--' + \
                  'Fiyat = ' + '--' + "{:.8f}".format(float(v_alim_fiyati)) + '--' + \
                  'İşlem Tutar = ' + '--' + "{:.1f}".format(float(v_islem_tutar))
-                 # + '--' \
-                 #  +'Mum Ortalama ' + '--' + str(mum_ortalama_yedek)
+        # + '--' \
+        #  +'Mum Ortalama ' + '--' + str(mum_ortalama_yedek)
         # Telegram mesajo
         Telebot_v1.mainma(v_mess, v_program_tip)
         Telebot_v1.genel_alimlar(v_symbol, 'A', v_dosya_genelbuy, v_dosya_alinan, v_dosya_satilan, v_dosya_sabika)
@@ -1054,12 +1069,12 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
     global closes_4h, highes_4h, lowes_4h, openes_4h
     global v_mum_boyu_1m_c, v_mum_boyu_3m_c, v_mum_boyu_5m_c, v_mum_boyu_15m_c, v_mum_boyu_1h_c, v_mum_boyu_4h_c
     global v_mum_boyu_1m_o, v_mum_boyu_3m_o, v_mum_boyu_5m_o, v_mum_boyu_15m_o, v_mum_boyu_1h_o, v_mum_boyu_4h_o
-    global mum_ortalama,mum_ortalama_yedek
+    global mum_ortalama, mum_ortalama_yedek
     mum_boyu_orani = 0
     v_mum_poz_3m, v_mum_poz_5m, v_mum_poz_15m, v_mum_poz_4h = 0, 0, 0, 0
     # global mum_ortalama
     mum_ortalama = []
-    v_girme, v_girms, v_girmex1,v_son_3 = 0, 0, 0,0
+    v_girme, v_girms, v_girmex1, v_son_3 = 0, 0, 0, 0
     v_close = closes[-1]
     v_open = openes[-1]
 
@@ -1144,7 +1159,7 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             v_zip_hesap = ((float(v_close) - float(v_max)) / float(v_max)) * 100
 
             # if float(v_zip_hesap) < float(v_ziplama_oran) * 1.6 and float(v_zip_hesap) > float(v_ziplama_oran) * 0.4:
-            if float(v_zip_hesap) > float(v_ziplama_oran) : # and float(v_zip_hesap) < float(v_ziplama_oran)*5:
+            if float(v_zip_hesap) > float(v_ziplama_oran):  # and float(v_zip_hesap) < float(v_ziplama_oran)*5:
                 print('ok')
             else:
                 v_girme = v_girme + 1
@@ -1155,7 +1170,7 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             else:
                 v_ort_mumboyoran = 0
 
-            #son mum yükselmesinden önce büyük mumlar varsa girme..Patlam olmuştur gücü azalıyordur.
+            # son mum yükselmesinden önce büyük mumlar varsa girme..Patlam olmuştur gücü azalıyordur.
             #
             # for i in range(int(v_say)-2):
             #     if float(mum_ortalama[i]) > float(v_artim_oran):
@@ -1168,10 +1183,10 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #         # Telebot_v1.mainma(vmesaj, genel_program_tipi)
 
             mum_ortalama.append(float(v_artim_oran))
-            mum_ortalama.append(int(v_girme)+999)
+            mum_ortalama.append(int(v_girme) + 999)
             mum_ortalama_yedek = mum_ortalama
 
-            #Boğada artım oranı ortalam mum artım oranının en az 3 katı değilse girme
+            # Boğada artım oranı ortalam mum artım oranının en az 3 katı değilse girme
             if float(v_artim_oran) >= float(v_ort_mumboyoran) * 1.2:
                 print('ok')
             else:
@@ -1180,7 +1195,6 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             # #Mumlar mümkün olduğunca küçük olsun
             # if float(v_ort_mumboyoran) >0.6:
             #     v_girme = v_girme + 1
-
 
             # Dalga 5 katlı mumdan büyükse girmesin
             # Bogada birden zıplamalar olabilir. O nedenle ortalama mumlar küçük olduğundan dalyaga göre oran yüksek olmalı
@@ -1194,7 +1208,7 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #         if float(v_dalgalanma_oran) > float(v_ort_mumboyoran) * 3:
             #             v_girme = v_girme + 1
 
-            #Anlık mumların pozitif olması
+            # Anlık mumların pozitif olması
             if float(v_mum_boyu_1m) < 0:
                 v_girme = v_girme + 1
             if float(v_mum_boyu_3m) < 0:
@@ -1209,15 +1223,14 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #     v_girme = v_girme + 1
 
             # ------------------------------------
-            #3m peryotta son 5 mumum en yükseği değilse girme
+            # 3m peryotta son 5 mumum en yükseği değilse girme
             v_girmex1 = get_first_set_of_closes_online(v_symbol, '3m', 5)
             v_girme = v_girme + v_girmex1
 
-
-            #v_closex1 = v_mum_boyu_3m_c
+            # v_closex1 = v_mum_boyu_3m_c
             # print(v_closex1, datetime.now())
             # print('Closes', closes_3m)
-            #v_mum_boyu = float(closes[-1]) - float(openes_on[-1])
+            # v_mum_boyu = float(closes[-1]) - float(openes_on[-1])
 
             # for i in range(1, 5):
             #     if float(closes_3m[-i]) > float(v_closex1):
@@ -1226,8 +1239,8 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             #
 
     # Tüm ilk ve son kontrollerde sabikalı olmaması lazım
-    v_girms = sabikalilari_temizle(v_symbol)
-    v_girme = v_girme + int(v_girms)
+    # v_girms = sabikalilari_temizle(v_symbol)
+    # v_girme = v_girme + int(v_girms)
 
     return v_girme, v_artim_oran
 
@@ -1432,8 +1445,8 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
             time.sleep(0.2)
 
             # Sabıkalıysa diğer uygunluklara bakmaya gerek yok
-            v_girmes = sabikalilari_temizle(v_symbol)
-            v_girme = v_girme + int(v_girmes)
+            # v_girmes = sabikalilari_temizle(v_symbol)
+            # v_girme = v_girme + int(v_girmes)
 
             if v_girme == 0:
                 # Uygun olmayanları listeden çıkar. Dalgalanma bandı dışındaki ve sabıkalıları temizler
@@ -1467,35 +1480,36 @@ def dosya_aktar(v_inter_g, v_dalga_oran, v_mum_sayisi, v_ziplama_oran, v_program
 
                     # Diğer robotlarca işleniyorsa da bakma
                     if v_girme == 0:
+                        print('ok')
                         # Coin diğer robotlarca isleniyorsa alma
-                        with open(v_dosya_islenen_1, 'r') as dosya_islenen1:
-                            for l1 in dosya_islenen1.read().splitlines():
-                                if v_symbol == l1:
-                                    v_girme = v_girme + 1
-                        dosya_islenen1.close()
-
-                        # Coin diğer robotlarca isleniyorsa alma
-                        with open(v_dosya_islenen_2, 'r') as dosya_islenen2:
-                            for l2 in dosya_islenen2.read().splitlines():
-                                if v_symbol == l2:
-                                    v_girme = v_girme + 1
-                        dosya_islenen2.close()
-
-                        # Coin diğer robotlarca isleniyorsa alma
-                        with open(v_dosya_islenen_3, 'r') as dosya_islenen3:
-                            for l3 in dosya_islenen3.read().splitlines():
-                                if v_symbol == l3:
-                                    v_girme = v_girme + 1
-                        dosya_islenen3.close()
+                        # with open(v_dosya_islenen_1, 'r') as dosya_islenen1:
+                        #     for l1 in dosya_islenen1.read().splitlines():
+                        #         if v_symbol == l1:
+                        #             v_girme = v_girme + 1
+                        # dosya_islenen1.close()
+                        #
+                        # # Coin diğer robotlarca isleniyorsa alma
+                        # with open(v_dosya_islenen_2, 'r') as dosya_islenen2:
+                        #     for l2 in dosya_islenen2.read().splitlines():
+                        #         if v_symbol == l2:
+                        #             v_girme = v_girme + 1
+                        # dosya_islenen2.close()
+                        #
+                        # # Coin diğer robotlarca isleniyorsa alma
+                        # with open(v_dosya_islenen_3, 'r') as dosya_islenen3:
+                        #     for l3 in dosya_islenen3.read().splitlines():
+                        #         if v_symbol == l3:
+                        #             v_girme = v_girme + 1
+                        # dosya_islenen3.close()
 
             # *******************************************
 
             if v_girme == 0:
-                if i < 50:
+                if i < 10:
                     v_dosya_coin.append(line)
                     print('Dosyaya eklenen Coin..: ', line, i, '**', datetime.now())
                     x = x + 1
-                    if x == 50:
+                    if x == 10:
                         break
                 else:
                     print('Devamı...Dosyaya eklenen Coin..: ', line, i, datetime.now())
@@ -1554,40 +1568,28 @@ def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
     try:
         # print('Clo', len(closes),datetime.now())
         # Closes Socketleri için ilk değerleri oluşturur
-        # if v_int == '1m':
-        #     get_first_closeslar_olustur(v_sem, '1m')
-        #     time.sleep(0.5)
-        #     socket_front_closeslar(v_sem, '1m')
-        # elif v_int == '3m':
-        #     get_first_closeslar_olustur(v_sem, '3m')
-        #     time.sleep(0.5)
-        #     socket_front_closeslar(v_sem, '3m')
-        # elif v_int == '5m':
-        #     get_first_closeslar_olustur(v_sem, '5m')
-        #     time.sleep(0.5)
-        #     socket_front_closeslar(v_sem, '5m')
 
-        get_first_closeslar_olustur(v_sem, '1m')
-        time.sleep(0.05)
-        socket_front_closeslar(v_sem, '1m')
-        time.sleep(0.05)
-        get_first_closeslar_olustur(v_sem, '3m')
-        time.sleep(0.05)
-        socket_front_closeslar(v_sem, '3m')
-        time.sleep(0.05)
-        get_first_closeslar_olustur(v_sem, '5m')
-        time.sleep(0.05)
-        socket_front_closeslar(v_sem, '5m')
-
+        # get_first_closeslar_olustur(v_sem, '1m')
+        # time.sleep(0.5)
+        # socket_front_closeslar(v_sem, '1m')
+        # time.sleep(0.5)
+        # get_first_closeslar_olustur(v_sem, '3m')
+        # time.sleep(0.5)
+        # socket_front_closeslar(v_sem, '3m')
+        # time.sleep(0.5)
+        # get_first_closeslar_olustur(v_sem, '5m')
+        # time.sleep(0.5)
+        # socket_front_closeslar(v_sem, '5m')
+        # time.sleep(0.5)
         # İşlem yapılan ana closes oluşturulur
         get_first_set_of_closes(v_sem, v_int)
 
         # EMA, ADX gibi indikatörleri sn likte oluşturmak için kline lı kullanım..Yenileme 2 sn. Ama her sn veri geliyor.
-        socket_front(v_sem, v_int, v_mum_sayisi, v_dalga_oran)
+        #socket_front(v_sem, v_int, v_mum_sayisi, v_dalga_oran)
 
         # Son fiyatı almak için. Sn lik data yenileme
         socket_thread_front(v_sem, v_int)
-        # time.sleep(2)
+        time.sleep(0.5)
     except Exception as exp:
         v_hata_mesaj = 'Program Hata Oluştu!!..run_frontdata  = ' + str(exp) + '-' + \
                        str(v_sem) + str(datetime.now())
@@ -1613,13 +1615,25 @@ def main_islem(v_sembol_g, v_limit_g, v_inter_g, v_islem_tutar, v_volume_fark_or
         # print('Alınn', v_dosya_satilan, v_dosya_alinan)
 
         run_frontdata(v_sembol_g, v_inter_g, v_mum_sayisi, v_dalga_oran, v_program_tip)
-        # time.sleep(0.33)
+        time.sleep(0.33)
+
+        basla(v_limit_g, v_sembol_g)
+        time.sleep(1)
+
         islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_ziplama_oran, v_bakiye,
-              v_program_tip, v_sabika_sure, v_piyasa_modu, v_inter_g)
-    except Exception as exp:
-        v_hata_mesaj = 'Program Hata Oluştu!!..main_islem   = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(
-            datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
+              v_program_tip, v_sabika_sure, v_piyasa_modu, v_inter_g, v_volume_fark_oran, v_oran)
+
+    except BinanceAPIException as e:
+        print('Status code', str(e.status_code))
+        print('Mesajı', str(e.message))
+        # except Exception as exp:
+        v_hata_mesaj = 'Program Hata Oluştu!!..main_islem   ..  = ' + str(e.message) + '-' + str(v_sembol_g) + '-' + \
+                       str(e.status_code) + '-' + str(datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj)
+    # except Exception as exp:
+    #     v_hata_mesaj = 'Program Hata Oluştu!!..main_islem   = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(
+    #         datetime.now())
+    #     Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # *********************************************************************************************************
@@ -1637,12 +1651,17 @@ def kota_mesaj(v_kota_doldu):
 
 # ***********************************************************************************************************************
 def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test_prod, v_zip, v_bakiye, v_program_tip,
-          v_sabika_sure, v_piyasa_modu, v_inter_g):
+          v_sabika_sure, v_piyasa_modu, v_inter_g, v_volume_fark_oran, v_oran):
     global v_last_price_g, v_open_price, v_alim_var, v_ziplama_oran, genel_program_tipi, genel_piyasa_modu
+    global orderbook
     v_ziplama_oran = float(v_zip)
+
     v_atildi = 0
     v_on_zaman = ''
-    # time.sleep(1.66)
+
+    v_genel_orderbook = {}
+    v_genel_orderbook = orderbook  # get_snapshot(v_sembol_g, v_limit_g)
+    time.sleep(0.66)
     try:
         genel_program_tipi = v_program_tip
         genel_piyasa_modu = v_piyasa_modu
@@ -1650,7 +1669,7 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
         while (True):
             v_tt = str(datetime.now())[0:16]
             v_kota_doldu = icerdeki_alinan()
-            if v_kota_doldu >= 4:
+            if v_kota_doldu >= 5:
                 print('KOTA doldu...')
                 # if v_atildi ==0 :
                 #     v_atildi = kota_mesaj(v_kota_doldu)
@@ -1659,27 +1678,44 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_kar_oran, v_zarar_oran, v_test
                 # Telebot_v1.mainma(v_mesajx, v_program_tip)
                 # v_on_zaman = v_tt
                 if v_alim_var == 1:
-                    time.sleep(0.2)
+                    time.sleep(0.9)
                     # time.sleep(2)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
-                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure, v_inter_g)
+                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure,
+                                     v_inter_g, v_genel_orderbook, v_volume_fark_oran, v_oran)
             else:
                 if v_alim_var == 0:
-                    time.sleep(0.2)
+                    v_genel_orderbook = orderbook
+
+                    time.sleep(0.9)
                     # time.sleep(800)
                     if v_last_price_g != 0:
                         # print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, datetime.now())
-
-                        whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
-                                         v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure, v_inter_g)
+                        if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0 and len(
+                                v_genel_orderbook["asks"]) > 0:
+                            print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',
+                                  len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]),
+                                  datetime.now())
+                            whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
+                                             v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure,
+                                             v_inter_g, v_genel_orderbook, v_volume_fark_oran, v_oran)
                 else:
-                    time.sleep(0.2)
+                    time.sleep(0.9)
                     # time.sleep(800)
                     whale_order_full(v_sembol_g, v_limit_g, float(v_last_price_g), v_islem_tutar, v_kar_oran,
-                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure, v_inter_g)
-    except Exception as exp:
-        v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(datetime.now())
-        Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
+                                     v_zarar_oran, v_test_prod, v_bakiye, v_program_tip, v_sabika_sure,
+                                     v_inter_g, v_genel_orderbook, v_volume_fark_oran, v_oran)
+    except BinanceAPIException as e:
+        print('Status code', str(e.status_code), v_sembol_g)
+        print('Mesajı', str(e.message), v_sembol_g)
+        # except Exception as exp:
+        v_hata_mesaj = 'Program Hata Oluştu!!..islem  =  ' + str(e.message) + '-' + \
+                       str(e.status_code) + '-' + str(v_sembol_g) + '-' + str(datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj)
+
+    # except Exception as exp:
+    #     v_hata_mesaj = 'Program Hata Oluştu!!..islem  = ' + str(exp) + '-' + str(v_sembol_g) + '-' + str(datetime.now())
+    #     Telebot_v1.mainma(v_hata_mesaj, v_program_tip)
 
 
 # ***********************************************************************************************************************
@@ -2030,6 +2066,8 @@ def dosya_parametre_ata(program_tip, piyasa_modu):
             v_dosya_parametre = 'DOSYALAR/parametreler_ck2.txt'
         if program_tip == 'CK3':
             v_dosya_parametre = 'DOSYALAR/parametreler_ck3.txt'
+        if program_tip == 'CO':
+            v_dosya_parametre = 'DOSYALAR/parametreler_co.txt'
 
     if piyasa_modu == 'A':
         if program_tip == 'E':
@@ -2040,6 +2078,8 @@ def dosya_parametre_ata(program_tip, piyasa_modu):
             v_dosya_parametre = 'DOSYALAR/parametreler_ck2_A.txt'
         if program_tip == 'CK3':
             v_dosya_parametre = 'DOSYALAR/parametreler_ck3.txt'
+        if program_tip == 'CO':
+            v_dosya_parametre = 'DOSYALAR/parametreler_co.txt'
 
     if piyasa_modu == 'B':
         if program_tip == 'E':
@@ -2050,6 +2090,8 @@ def dosya_parametre_ata(program_tip, piyasa_modu):
             v_dosya_parametre = 'DOSYALAR/parametreler_ck2.txt'
         if program_tip == 'CK3':
             v_dosya_parametre = 'DOSYALAR/parametreler_ck3.txt'
+        if program_tip == 'CO':
+            v_dosya_parametre = 'DOSYALAR/parametreler_co.txt'
 
     if program_tip == 'CK':  # *************************************Elephant
         v_dosya_alinan = "DOSYALAR/Alinanlar_e.txt"
@@ -2111,6 +2153,21 @@ def dosya_parametre_ata(program_tip, piyasa_modu):
         v_dosya_islenen_1 = "DOSYALAR/islenen_ck1.txt"
         v_dosya_islenen_2 = "DOSYALAR/islenen_ck.txt"
         v_dosya_islenen_3 = "DOSYALAR/islenen_ck2.txt"
+    elif program_tip == 'CO':  # *************************************Elephant Bayby2
+        v_dosya_alinan = "DOSYALAR/Alinanlar_co.txt"
+        v_dosya_satilan = "DOSYALAR/Satilanlar_co.txt"
+        v_dosya_sembol = 'DOSYALAR/Sembol_co.txt'
+        v_dosya_sabika = 'DOSYALAR/sabikalilar_co.txt'
+        v_dosya_sabika1 = 'DOSYALAR/sabikalilar_ck1.txt'
+        v_dosya_sabika2 = 'DOSYALAR/sabikalilar_ck2.txt'
+        v_dosya_acilsat = 'DOSYALAR/acil_sat_co.txt'
+        v_dosya_acilal = 'DOSYALAR/acil_al_co.txt'
+        v_dosya_genelbuy = "DOSYALAR/genel_buy_ck.txt"
+        v_dosya_sonuc = "DOSYALAR/Sonuc_co.txt"
+        v_dosya_islenen = "DOSYALAR/islenen_co.txt"
+        v_dosya_islenen_1 = "DOSYALAR/islenen_ck1.txt"
+        v_dosya_islenen_2 = "DOSYALAR/islenen_ck.txt"
+        v_dosya_islenen_3 = "DOSYALAR/islenen_ck2.txt"
 
 
 # ******************************************************************************************************
@@ -2162,6 +2219,195 @@ def piyasa_modunu_belirle(v_dosya_param):
     return v_piyasa_modu
 
 
+# ***************************************************EMIR DEFTER***************************************
+
+def get_snapshot(v_sembol, v_limit):
+    r = requests.get('https://www.binance.com/api/v1/depth?symbol=' + v_sembol.upper() + '&limit=' + str(v_limit))
+    return loads(r.content.decode())
+
+
+# -------------------------------------------------------------------
+# ******************************************Emir defter kontrolü **********************************************************
+
+def orderbook_kontrol(v_symbol, v_genel_orderbook, v_volume_fark_oran, v_oran):
+    # v_oran  bid ve ask kısmından +- % kaçının alalım kapsamımıza bunu belirler
+    # v_volume_fark_oran  da bid emirlerinin whale e oranı ne olsun..Bu oran ne kadar yüksekse emirler o kadar güçlü
+    global v_last_price_g
+    depth_dict = v_genel_orderbook
+    try:
+        # v_frame = {side: pd.DataFrame(data=depth_dict[side], columns=["price", "quantity"], dtype=float)
+        #           for side in ["bids", "asks"]}
+        bids_price = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 0]
+        bids_quantity = np.asarray(v_genel_orderbook["bids"], dtype=float)[:, 1]
+        df_bids = pd.DataFrame(dtype=float)
+        df_bids["price"] = pd.Series(bids_price)
+        df_bids["quantity"] = pd.Series(bids_quantity)
+
+        asks_price = np.asarray(v_genel_orderbook["asks"], dtype=float)[:, 0]
+        asks_quantity = np.asarray(v_genel_orderbook["asks"], dtype=float)[:, 1]
+        df_asks = pd.DataFrame(dtype=float)
+        df_asks["price"] = pd.Series(asks_price)
+        df_asks["quantity"] = pd.Series(asks_quantity)
+        bid_tbl = df_bids
+        ask_tbl = df_asks
+        # ask_tbl = pd.DataFrame(data=depth_dict['asks'], columns=['price', 'quantity'],dtype=float)
+        # bid_tbl = pd.DataFrame(data=depth_dict['bids'], columns=['price', 'quantity'],dtype=float)
+        ask_tbl = ask_tbl.fillna(0)
+        bid_tbl = bid_tbl.fillna(0)
+        #
+        ask_tbl['price'] = pd.to_numeric(ask_tbl['price'])
+        ask_tbl['quantity'] = pd.to_numeric(ask_tbl['quantity'])
+        bid_tbl['price'] = pd.to_numeric(bid_tbl['price'])
+        bid_tbl['quantity'] = pd.to_numeric(bid_tbl['quantity'])
+
+        # data from websocket are not sorted yet
+        ask_tbl = ask_tbl.sort_values(by='price', ascending=True)
+        bid_tbl = bid_tbl.sort_values(by='price', ascending=False)
+
+        first_ask = float(ask_tbl.iloc[0, 0])
+        first_bid = float(bid_tbl.iloc[0, 0])
+        mid_price = float((first_ask + first_bid) / 2)
+
+        perc_above_first_ask = ((1.0 + v_oran) * mid_price)
+        perc_above_first_bid = ((1.0 - v_oran) * mid_price)
+
+        # limits the size of the table so that we only look at orders 5% above and under market price
+        ask_tbl = ask_tbl[(ask_tbl['price'] <= perc_above_first_ask)]
+        bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
+        #
+        # changing this position after first filter makes calc faster
+        fulltbl = bid_tbl.append(ask_tbl)  # append the buy and sell side tables to create one cohesive table
+        volumewhale = fulltbl['quantity'].sum()
+
+        # v_bidask_fark_tutar_old = float(bid_tbl['quantity'].sum()) - float(ask_tbl['quantity'].sum())
+        # v_vol_oran_bid_old = (float(bid_tbl['quantity'].sum()) / float(volumewhale)) * 100
+        # v_vol_oran_ask_old = (float(ask_tbl['quantity'].sum()) / float(volumewhale)) * 100
+        v_son_fiyat = float(v_last_price_g)
+
+        # v_hedef_bid = float(v_son_fiyat * v_kar_oran)
+        # v_hedef_ask = float(v_son_fiyat * v_zarar_oran)
+        # Son fiyatın üzerindeki büyük teklifleri ve aşağısındaki küçük teklifleri bırakır
+        ask_tbl = ask_tbl[(ask_tbl['price'] <= float(v_son_fiyat))]  # Son fiyatın altındaki talepler fiyatı düşürür
+        bid_tbl = bid_tbl[(bid_tbl['price'] >= float(v_son_fiyat))]  # Son fiyatın üzerindeki teklifler  fiyatı yükse
+        # Tüm bu filtrelemerden sonra tabloda kayıt kaldıysa işleme devam et
+        v_bid_len = len(bid_tbl)
+        # v_ask_len = len(ask_tbl)
+
+        #print('bid son', bid_tbl)
+        #print('ask son', ask_tbl)
+        # Teklifi karşılayan satışları çıkarıyoruz
+        v_bidask_fark_tutar = float(bid_tbl['quantity'].sum()) - float(ask_tbl['quantity'].sum())
+        v_vol_oran_bid = (float(bid_tbl['quantity'].sum()) / float(volumewhale)) * 100
+        v_vol_oran_ask = (float(ask_tbl['quantity'].sum()) / float(volumewhale)) * 100
+
+        #print('Bidler ', bid_tbl)
+        # and float(ask_tbl['quantity'].sum()) <2 and v_vol_oran_ask <1 and \
+        # float(v_vol_oran_bid) <20:
+        if v_bid_len > 0 and v_bidask_fark_tutar >= 0 and float(v_vol_oran_bid) >= float(v_volume_fark_oran * 100):
+            v_order_kontrol = 1
+        else:
+            v_order_kontrol = 0
+
+        return v_order_kontrol
+
+    except BinanceAPIException as e:
+        print('Status code', str(e.status_code))
+        print('Mesajı', str(e.message))
+        # except Exception as exp:
+        v_hata_mesaj = 'Emir Defteri Kontrolünde Hata Oluştu!!..  = ' + str(e.message) + '-' + \
+                       str(e.status_code) + '-' + str(datetime.now())
+        Telebot_v1.mainma(v_hata_mesaj)
+
+
+# ***********************************************************************************************************************
+def basla(v_lim, v_sem):
+    global v_limit, v_sembol, orderbook, updates
+    try:
+        v_limit = v_lim
+        v_sembol = v_sem.lower()
+        v_soc = "wss://stream.binance.com:9443/ws/" + v_sembol + "@depth@100ms"
+        wsb = websocket.WebSocketApp(v_soc, on_open=on_open, on_close=on_close, on_message=on_message)
+        # ws.run_forever()
+        t1 = threading.Thread(target=wsb.run_forever)
+        t1.start()
+        t1.join(2)
+        orderbook = {}
+        updates = 0
+    except Exception as exp:
+        v_hata_mesaj = 'Hata Oluştu!!..basla  = ' + str(exp)
+        Telebot_v1.mainma(v_hata_mesaj)
+
+
+def on_open(ws):
+    print('2.Soketi başlattı .....!!!')
+
+
+def on_close(ws):
+    print('closed connection')
+
+
+def on_message(ws, message):
+    global orderbook, v_limit, v_sembol
+    global updates, v_last_update
+
+    # print('received message')
+    data = loads(message)
+
+    if len(orderbook) == 0:
+        orderbook = get_snapshot(v_sembol, v_limit)
+
+    lastUpdateId = orderbook['lastUpdateId']
+    # print(datetime.now(), 'Anlık Data', len(data["b"]))
+    # print('İçerde Emir orderbook Bids ve Ask =', len(orderbook["bids"]), '-', len(orderbook["asks"]))
+    # drop any updates older than the snapshot
+    if updates == 0:
+        if data['U'] <= lastUpdateId + 1 and data['u'] >= lastUpdateId + 1:
+            # print(f'lastUpdateId {data["u"]}')
+            orderbook['lastUpdateId'] = data['u']
+            process_updates(data)
+        else:
+            print('discard update')
+
+    # check if update still in sync with orderbook
+    elif data['U'] == lastUpdateId + 1:
+        print(f'lastUpdateId {data["u"]}')
+        orderbook['lastUpdateId'] = data['u']
+        process_updates(data)
+    else:
+        print('Out of sync, abort')
+
+
+def process_updates(data):
+    # with lock:
+    for update in data['b']:
+        manage_orderbook('bids', update)
+    for update in data['a']:
+        manage_orderbook('asks', update)
+        # last_update['last_update'] = datetime.now()
+    v_last_update = datetime.now()
+
+
+def manage_orderbook(side, update):
+    price, qty = update
+    for x in range(0, len(orderbook[side])):
+        if price == orderbook[side][x][0]:
+            if qty == 0:
+                del orderbook[side]
+                print(f'Removed {price} {qty}')
+                break
+            else:
+                orderbook[side][x] = update
+                # print(f'Updated: {price} {qty}')
+                break
+        elif price > orderbook[side][x][0]:
+            if qty != 0:
+                orderbook[side].insert(x, update)
+                # print(f'New price: {price} {qty}')
+                break
+            else:
+                break
+
+
 # ***********************************************************************************************************************
 if __name__ == '__main__':
     global con, cursor, genel_program_tipi
@@ -2169,7 +2415,7 @@ if __name__ == '__main__':
     v_dosya_coin = []
 
     # gc.collect()
-    v_civciv_tip = 2
+    v_civciv_tip = 4
 
     # Genel piyasa durumu belirlendi
     v_piyasa_modu = piyasa_modunu_belirle("DOSYALAR/genel_parametreler.txt")
@@ -2180,6 +2426,8 @@ if __name__ == '__main__':
         v_dosya_param = "DOSYALAR/parametreler_ck2.txt"
     elif v_civciv_tip == 3:
         v_dosya_param = "DOSYALAR/parametreler_ck3.txt"
+    elif v_civciv_tip == 4:
+        v_dosya_param = "DOSYALAR/parametreler_co.txt"
 
     # if v_piyasa_modu == 'B':
     #     v_dosya_param = "DOSYALAR/parametreler_ck1.txt"
@@ -2234,7 +2482,7 @@ if __name__ == '__main__':
                     v_maxw = len(v_dosya_coin)
 
                 # Son temizlik
-                islenen_son_temizlik_yap()
+                #                islenen_son_temizlik_yap()
 
                 with concurrent.futures.ProcessPoolExecutor(max_workers=v_maxw) as executer:
                     results = [executer.submit(main_islem, v_dosya_coin[p], v_limit_g, v_inter_g, v_islem_tutar,

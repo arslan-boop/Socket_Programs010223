@@ -1228,8 +1228,7 @@ def islem(v_sembol_g, v_limit_g, v_islem_tutar, v_volume_fark_oran, v_oran, v_ka
                 if v_alim_var == 0:
                     v_genel_orderbook = orderbook  # get_snapshot(v_sembol_g, v_limit_g)
                     time.sleep(0.01)
-                    if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0 and len(
-                            v_genel_orderbook["asks"]) > 0:
+                    if v_last_price_g != 0 and len(v_genel_orderbook["bids"]) > 0 and len(v_genel_orderbook["asks"]) > 0:
                         print('İşlenen Coin ', v_sembol_g, 'Son Fiyat', v_last_price_g, 'Order Dizi Bids =',
                               len(v_genel_orderbook["bids"]), 'Order Dizi Asks =', len(v_genel_orderbook["asks"]),
                               datetime.now())
