@@ -237,8 +237,8 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                 if v_test_prod == 'P':
                     # Karı devam ettir
                     v_i='3m'
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
-                    # v_izsur_stop =1
+                    #v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
+                    v_izsur_stop =1
                     if v_izsur_stop == 1:
                         # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
                         sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,
@@ -249,8 +249,8 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                         v_hizli_gonzales = 0
                 else:
                     v_i = '3m'
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
-                    # v_izsur_stop = 1
+                    #v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
+                    v_izsur_stop = 1
                     if v_izsur_stop == 1:
                         # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
                         sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 1, v_alim_zamani, v_satim_sebeb,

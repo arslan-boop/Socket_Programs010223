@@ -181,10 +181,10 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
             v_order_kontrol = orderbook_kontrol(v_symbol, v_genel_orderbook, v_volume_fark_oran, v_oran)
 
             #1,3,5 dk da pozitif mumlar olsun
-            # if float(v_mum_boyu_1m) < 0:
-            #     v_girme = v_girme + 1
-            # if float(v_mum_boyu_3m) < 0:
-            #     v_girme = v_girme + 1
+            if float(v_mum_boyu_1m) < 0:
+                v_girme = v_girme + 1
+            if float(v_mum_boyu_3m) < 0:
+                v_girme = v_girme + 1
             # if float(v_mum_boyu_5m) < 0:
             #     v_girme = v_girme + 1
 
@@ -1569,14 +1569,14 @@ def run_frontdata(v_sem, v_int, v_mum_sayisi, v_dalga_oran, v_program_tip):
         # print('Clo', len(closes),datetime.now())
         # Closes Socketleri için ilk değerleri oluşturur
 
-        # get_first_closeslar_olustur(v_sem, '1m')
-        # time.sleep(0.5)
-        # socket_front_closeslar(v_sem, '1m')
-        # time.sleep(0.5)
-        # get_first_closeslar_olustur(v_sem, '3m')
-        # time.sleep(0.5)
-        # socket_front_closeslar(v_sem, '3m')
-        # time.sleep(0.5)
+        get_first_closeslar_olustur(v_sem, '1m')
+        time.sleep(0.5)
+        socket_front_closeslar(v_sem, '1m')
+        time.sleep(0.5)
+        get_first_closeslar_olustur(v_sem, '3m')
+        time.sleep(0.5)
+        socket_front_closeslar(v_sem, '3m')
+        time.sleep(0.5)
         # get_first_closeslar_olustur(v_sem, '5m')
         # time.sleep(0.5)
         # socket_front_closeslar(v_sem, '5m')
