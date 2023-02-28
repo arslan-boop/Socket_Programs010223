@@ -136,7 +136,7 @@ def Sel_USDT(v_dosya_sembol):  # , v
     my_query = "SELECT name FROM USDT_COINS WHERE USDT_VOLUME > 500000 ORDER BY PRICE_CHANGE_PERCENT DESC "
     # my_query = "SELECT name FROM USDT_COINS ORDER BY PRICE_CHANGE_PERCENT DESC "
     cursor.execute(my_query)
-    i = 200
+    i = 300
     record = cursor.fetchmany(i)  # .fetchall()
     for x in record:
         # print(x, 'kayıt= ', record[0])

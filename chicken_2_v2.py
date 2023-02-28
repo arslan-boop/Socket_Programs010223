@@ -82,7 +82,7 @@ def get_round_step_quantity(v_symbol, qty):
 
 
 # *****************************ALIM SATIM İŞLEMLERİ*********************************************************************
-def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
+def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran,v_aciklama):
     global v_hedef_bid_global, v_hedef_ask_global, v_last_price_g, v_alim_fiyati, v_ters_kesim
     global v_mum_boyu_1m, v_mum_boyu_3m, v_mum_boyu_5m, v_mum_boyu_15m, v_mum_boyu_1h, v_mum_boyu_4h
     global closes_1m, highes_1m, lowes_1m, openes_1m
@@ -139,23 +139,23 @@ def iz_suren_kar_stop(v_symbol, v_inter, v_kar_oran):
 
         if float(v_mumboy) < 0 and float(v_mumboy_prev) < 0 and float(v_close_kucukmu_on)> float(v_close_kucukmu):
             v_izsur_stop = 1
-            v_satim_sebeb = 'İzsürdü..2 mum red'
+            v_satim_sebeb = 'İzsürdü..2 mum red '+'-'+v_aciklama
             break
 
         if float(v_last_price_g) < float(v_hedef_ask_global):
             v_izsur_stop = 1
-            v_satim_sebeb = 'İzsürdü..Zarar Seviyesine Ulaştı'
+            v_satim_sebeb = 'İzsürdü..Zarar Seviyesine Ulaştı '+'-'+v_aciklama
             break
 
         v_acilst = acil_satim(v_symbol)
         if v_acilst == 1:
             v_izsur_stop = 1
-            v_satim_sebeb = 'İzsürdü..Acil Satim İstendi'
+            v_satim_sebeb = 'İzsürdü..Acil Satim İstendi '+'-'+v_aciklama
             break
 
         if v_ters_kesim == 1:
             v_izsur_stop = 1
-            v_satim_sebeb = 'İzsürdü..2.mum Kırmuzı'
+            v_satim_sebeb = 'İzsürdü..2.mum Kırmuzı '+'-'+v_aciklama
             break
 
     return v_izsur_stop, v_satim_sebeb
@@ -237,7 +237,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                 if v_test_prod == 'P':
                     # Karı devam ettir
                     v_i='3m'
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
+                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran,'Kar Hedefine Ulasmisti')
                     #v_izsur_stop =1
                     if v_izsur_stop == 1:
                         # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
@@ -249,7 +249,7 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                         v_hizli_gonzales = 0
                 else:
                     v_i = '3m'
-                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran)
+                    v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran,'Kar Hedefine Ulasmisti')
                     #v_izsur_stop = 1
                     if v_izsur_stop == 1:
                         # v_satim_sebeb = 'İzsürdü..Kar Hedefine Ulasti'
@@ -260,6 +260,39 @@ def whale_order_full(v_symbol, v_limit, v_son_fiyat, v_islem_tutar, v_kar_oran, 
                         v_hizli_gonzales = 0
 
                 # time.sleep(60)
+            # ********************************************************Aldıktan hemen sonra düşmeye başladıysa
+            elif float(v_last_price_g) < float(v_alim_fiyati):
+                v_satim_sebeb = 'Alim Seviyesinin Altina Dustu'
+                v_i = '3m'
+                v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran,v_satim_sebeb)
+                # v_izsur_stop = 1
+                if v_izsur_stop == 1:
+                    if v_test_prod == 'P':
+                        sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 2, v_alim_zamani, v_satim_sebeb, v_program_tip,
+                                  v_sabika_sure)
+                    else:
+                        sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 2, v_alim_zamani, v_satim_sebeb,
+                                       v_program_tip, v_sabika_sure)
+                    v_alim_var = 0
+                    v_ters_kesim = 0
+                    v_hizli_gonzales = 0
+            # ********************************************************Aldıktan sonra kar hedefine ulaşamadan 3m 2 kırmızı yaktıysa
+            # elif float(v_last_price_g) > float(v_alim_fiyati) and float(v_last_price_g) < float(v_hedef_bid_global):
+            #     v_satim_sebeb = 'Karda Fakat Hedefe Ulaşamadı'
+            #     v_i = '3m'
+            #     v_izsur_stop, v_satim_sebeb = iz_suren_kar_stop(v_symbol, v_i, v_kar_oran,v_satim_sebeb)
+            #     # v_izsur_stop = 1
+            #     if v_izsur_stop == 1:
+            #         if v_test_prod == 'P':
+            #             sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, 2, v_alim_zamani, v_satim_sebeb, v_program_tip,
+            #                       v_sabika_sure)
+            #         else:
+            #             sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, 2, v_alim_zamani, v_satim_sebeb,
+            #                            v_program_tip, v_sabika_sure)
+            #         v_alim_var = 0
+            #         v_ters_kesim = 0
+            #         v_hizli_gonzales = 0
+            #
             # ********************************************************Belirlenen zararın altına indiyse
             elif float(v_last_price_g) < float(v_hedef_ask_global):
                 v_satim_sebeb = 'Zarar Seviyesinin Altina Dustu'
@@ -1098,8 +1131,8 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
         # Son mum en yüksek olsun , Dalgalanma oran uygun olsun, Zıplama farkı zip_orandan büyük olsun fakat
         # zip oranın 4 katından da büyük olmasın, Sondan önceki 3 mum son mumdan büyük olmasın
 
-        v_min = float(closes[-2])
-        v_max = float(closes[-2])
+        v_min = float(closes[-1])
+        v_max = float(closes[-1])
 
         # print('mum1', mum_ortalama, len(mum_ortalama)) # closes[-2],closes[-1])
         # print('ilk-',v_girme, 'Min - Max', v_min, v_max, 'Close/open', v_close, v_open, datetime.now())
@@ -1143,11 +1176,11 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             # else:
             v_zip_hesap = ((float(v_close) - float(v_max)) / float(v_max)) * 100
 
-            # if float(v_zip_hesap) < float(v_ziplama_oran) * 1.6 and float(v_zip_hesap) > float(v_ziplama_oran) * 0.4:
-            if float(v_zip_hesap) > float(v_ziplama_oran)  and float(v_zip_hesap) < float(v_ziplama_oran)*4:
-                print('ok')
-            else:
-                v_girme = v_girme + 1
+            # # if float(v_zip_hesap) < float(v_ziplama_oran) * 1.6 and float(v_zip_hesap) > float(v_ziplama_oran) * 0.4:
+            # if float(v_zip_hesap) > float(v_ziplama_oran)  and float(v_zip_hesap) < float(v_ziplama_oran)*4:
+            #     print('ok')
+            # else:
+            #     v_girme = v_girme + 1
 
             # Son mum artım oranı ortalama mumun en az 2 katı olsun
             if len(mum_ortalama) > 0:
@@ -1208,10 +1241,10 @@ def check_full_kontrol(v_symbol, openes, closes, highes, lowes, v_mum_sayisi, v_
             # if float(v_mum_boyu_4h) < 0:
             #     v_girme = v_girme + 1
 
-            # ------------------------------------
-            #3m peryotta son 5 mumum en yükseği değilse girme
-            v_girmex1 = get_first_set_of_closes_online(v_symbol, '3m', 15)
-            v_girme = v_girme + v_girmex1
+            # # ------------------------------------
+            # #3m peryotta son 5 mumum en yükseği değilse girme
+            # v_girmex1 = get_first_set_of_closes_online(v_symbol, '3m', 15)
+            # v_girme = v_girme + v_girmex1
 
 
             #v_closex1 = v_mum_boyu_3m_c

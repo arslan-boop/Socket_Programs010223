@@ -380,7 +380,7 @@ def sell_coin(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani, v_sa
                                    '*' + "{:.3f}".format(float(v_profit_oran)) + '*' + str(v_satim_zamani) + '*' + str(
                     v_alim_zamani) + '*' + \
                                    str(v_satim_sebeb)
-                Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
+                #Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
             else:
                 # ******Zarar edenler cezasını çeksin******
                 Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
@@ -447,7 +447,7 @@ def sell_coin_test(v_symbol, v_alim_miktar, v_alim_fiyati, v_tip, v_alim_zamani,
             Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
         else:
             # ******Zarar edenler cezasını çeksin******
-            Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
+            #Telebot_v1.sabikali_yap(v_symbol, v_dosya_sabika, int(v_sabika_sure))
 
             v_profit_oran = float(((float(v_alim_fiyati) - float(v_satim_fiyati)) * 100) / float(v_alim_fiyati))
             if v_tip == 3:
@@ -1270,7 +1270,7 @@ def socket_thread_front(v_symbol, v_inter):
     bsm.start()
     bsm.start_symbol_ticker_socket(symbol=v_symbol, callback=son_fiyat_getir)
     bsm.join(1.66)
-    # print('fff')
+    print('fff')
 
 
 # ***********************************************************************************************************************
